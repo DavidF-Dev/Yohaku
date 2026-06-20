@@ -1,5 +1,7 @@
 # Yohaku 余白
 
+[![Release](https://img.shields.io/github/v/release/DavidF-Dev/Yohaku?style=flat-square)](https://github.com/DavidF-Dev/Yohaku/releases/latest)
+[![License](https://img.shields.io/github/license/DavidF-Dev/Yohaku?style=flat-square)](LICENSE.md)
 [![CI](https://github.com/DavidF-Dev/Yohaku/actions/workflows/ci.yml/badge.svg)](https://github.com/DavidF-Dev/Yohaku/actions/workflows/ci.yml)
 
 A lightweight Windows 11 background (tray) app that adds a configurable **margin
