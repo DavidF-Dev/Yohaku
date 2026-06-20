@@ -93,7 +93,7 @@ internal static class Program
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Edit config…", null, (_, _) => OpenConfig());
         menu.Items.Add("Reload config", null, (_, _) => ReloadConfig());
-        menu.Items.Add("Rebuild appbars", null, (_, _) => _appbars?.Rebuild());
+        menu.Items.Add("Rebuild margins", null, (_, _) => _appbars?.Rebuild());
         menu.Items.Add("Open log folder", null, (_, _) => OpenLogFolder());
 
         var startupItem = new ToolStripMenuItem("Start with Windows")

@@ -152,7 +152,7 @@ reordered, the presence check breaks.
 ## Phase 2: runtime robustness (implemented)
 
 Phase 1 re-resolves on every build/rebuild (startup, display change, config reload,
-manual "Rebuild appbars"). It does **not** re-resolve when the taskbar moves edges
+manual "Rebuild margins"). It does **not** re-resolve when the taskbar moves edges
 or toggles auto-hide mid-session without a display change, because the reposition
 path reuses each strip's existing thickness.
 
