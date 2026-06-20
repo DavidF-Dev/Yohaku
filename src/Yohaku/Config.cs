@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Yohaku;
 
-/// <summary>User configuration — the per-edge margins, persisted as JSON.</summary>
+/// <summary>User configuration: the per-edge margins, persisted as JSON.</summary>
 public sealed class Config
 {
     /// <summary>Margin reserved on each edge of every monitor, in logical (96-DPI) pixels.</summary>

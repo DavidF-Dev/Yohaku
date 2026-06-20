@@ -111,7 +111,7 @@ public class StripGeometryTests
 
     [Theory]
     [InlineData(1)]   // auto-hide sliver
-    [InlineData(4)]   // exactly the threshold — not "more than"
+    [InlineData(4)]   // exactly the threshold, not "more than"
     public void EdgeReservesSpace_false_for_sliver_or_threshold(int gap)
     {
         var work = Work(0, 0, 1920, 1080 - gap);

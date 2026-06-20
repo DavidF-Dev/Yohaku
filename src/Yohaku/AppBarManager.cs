@@ -19,7 +19,7 @@ public sealed class AppBarManager : IDisposable
     private readonly System.Windows.Forms.Timer _repositionTimer;
     // One-shot defer between teardown and re-create: the appbar subsystem must process the ABM_REMOVE messages before we register replacements, or the new reservations stay inert.
     private readonly System.Windows.Forms.Timer _deferredBuildTimer;
-    // Debounced in-place re-pin (taskbar auto-hide toggle / config edit) — avoids the teardown flash of a full rebuild.
+    // Debounced in-place re-pin (taskbar auto-hide toggle / config edit); avoids the teardown flash of a full rebuild.
     private readonly System.Windows.Forms.Timer _reapplyTimer;
     private bool _repositioning;
     private bool _disposed;
@@ -30,7 +30,7 @@ public sealed class AppBarManager : IDisposable
     // A docked taskbar reserves tens of px; an auto-hidden one only a ~1px sliver.
     private const int TaskbarMinReservePx = 4;
 
-    // Registration order: top & bottom (full width) before left & right, so the system trims left/right to sit between them — a clean frame, no corner overlap.
+    // Registration order: top & bottom (full width) before left & right, so the system trims left/right to sit between them, forming a clean frame with no corner overlap.
     private static readonly uint[] EdgeOrder = { ABE_TOP, ABE_BOTTOM, ABE_LEFT, ABE_RIGHT };
 
     // Taskbar edge + auto-hide state at the last build; a change re-resolves the override.
@@ -133,7 +133,7 @@ public sealed class AppBarManager : IDisposable
         _deferredBuildTimer.Start();
     }
 
-    /// <summary>Debounced rebuild — call on monitor add/remove or display changes.</summary>
+    /// <summary>Debounced rebuild; call on monitor add/remove or display changes.</summary>
     public void ScheduleRebuild()
     {
         if (_disposed) return;
@@ -167,7 +167,7 @@ public sealed class AppBarManager : IDisposable
     }
 
     /// <summary>
-    /// Re-resolve and re-pin each strip's thickness in place — no teardown — when the
+    /// Re-resolve and re-pin each strip's thickness in place (no teardown) when the
     /// strip set is unchanged (config edit, or taskbar auto-hide toggle). Returns false
     /// if a full rebuild is needed instead (topology drift, or a strip would have to
     /// register/unregister), leaving all strips untouched.

@@ -8,7 +8,7 @@ namespace Yohaku;
 /// A single reserved margin strip along one edge of one monitor, backed by a
 /// hidden top-level window registered as an application desktop toolbar (appbar).
 /// The reserved rectangle shrinks the monitor work area, which is what makes
-/// maximised windows inset — the strip itself draws nothing (the gap shows the
+/// maximised windows inset; the strip itself draws nothing (the gap shows the
 /// desktop wallpaper).
 /// </summary>
 internal sealed class AppBarStrip : NativeWindow
@@ -104,7 +104,7 @@ internal sealed class AppBarStrip : NativeWindow
         // QUERYPOS only fixes the approved outer edge, so re-pin our exact thickness against it.
         abd.rc = StripGeometry.PinThickness(_edge, abd.rc, _thickness);
 
-        // Idempotent: if the reservation is unchanged, don't SETPOS — leave the work area (and maximised windows) undisturbed.
+        // Idempotent: if the reservation is unchanged, don't SETPOS, so the work area (and maximised windows) stays undisturbed.
         var rc = abd.rc;
         if (rc.Left == ReservedRect.Left && rc.Top == ReservedRect.Top &&
             rc.Right == ReservedRect.Right && rc.Bottom == ReservedRect.Bottom)

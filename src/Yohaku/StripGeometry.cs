@@ -5,7 +5,7 @@ namespace Yohaku;
 /// <summary>
 /// Pure, side-effect-free geometry for appbar strips. Extracted from the
 /// Win32-coupled classes so it can be unit-tested in isolation. Operates only on
-/// plain <see cref="RECT"/> values — no system calls.
+/// plain <see cref="RECT"/> values, with no system calls.
 /// </summary>
 internal static class StripGeometry
 {
@@ -15,7 +15,7 @@ internal static class StripGeometry
 
     /// <summary>
     /// True when the work area is inset from the monitor on <paramref name="edge"/>
-    /// by more than <paramref name="minReservePx"/> physical pixels — i.e. a taskbar
+    /// by more than <paramref name="minReservePx"/> physical pixels, i.e. a taskbar
     /// genuinely reserves space there rather than leaving only an auto-hide sliver.
     /// </summary>
     public static bool EdgeReservesSpace(uint edge, RECT monitor, RECT work, int minReservePx) =>
@@ -34,7 +34,7 @@ internal static class StripGeometry
 
     /// <summary>
     /// How far the work area is inset from the monitor on <paramref name="edge"/>, in
-    /// physical pixels — the space reserved there by the taskbar and any appbars.
+    /// physical pixels: the space reserved there by the taskbar and any appbars.
     /// </summary>
     public static int EdgeGap(uint edge, RECT monitor, RECT work) => edge switch
     {

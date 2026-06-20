@@ -2,14 +2,14 @@
 
 A lightweight Windows 11 background (tray) app that adds a configurable **margin
 around every monitor**, so maximised (and snapped) windows get a gap from the
-screen edges — while staying **genuinely maximised**.
+screen edges, while staying **genuinely maximised**.
 
-> *Yohaku* (余白) is the Japanese term for intentional blank space — the margin
+> *Yohaku* (余白) is the Japanese term for intentional blank space: the margin
 > left around the content. That's exactly what this app reserves.
 
 ## How it works
 
-In Windows 11 a maximised window fills the monitor **work area** (`rcWork` — the
+In Windows 11 a maximised window fills the monitor **work area** (`rcWork`, the
 screen minus the taskbar). The taskbar reserves its space by registering as an
 **application desktop toolbar (appbar)**.
 
@@ -18,7 +18,7 @@ Yohaku does the same thing: on each monitor it registers four thin appbars
 work area, so when *any* window maximises, Windows sizes it to the smaller area
 automatically.
 
-Crucially, the window is **truly maximised** — real `WS_MAXIMIZE` state, the
+Crucially, the window is **truly maximised**: real `WS_MAXIMIZE` state, the
 correct "restore down" caption-button glyph, and apps receive `SIZE_MAXIMIZED`.
 There's no window-hijacking, no flash, no DLL injection, and it works on every
 app including elevated/protected ones.
@@ -32,8 +32,8 @@ app including elevated/protected ones.
 - ⬜ **Rounded corners are not applied yet.** A truly-maximised window is square
   by OS design (DWM suppresses rounding for the maximised state). Because this
   approach guarantees a gap, rounded corners can be faked later with
-  `SetWindowRgn` — a planned follow-up.
-- ℹ️ The margin is **global** — it applies to all maximised/snapped windows and
+  `SetWindowRgn`, a planned follow-up.
+- ℹ️ The margin is **global**: it applies to all maximised/snapped windows and
   reflows the desktop work area. It is not per-application.
 
 Fullscreen games are unaffected: exclusive fullscreen isn't a window state, and
@@ -56,8 +56,8 @@ Runs in the system tray.
 ### Run at login (optional)
 
 Toggle **Start with Windows** in the tray menu. It adds (or removes) a per-user
-entry under `HKCU\…\CurrentVersion\Run` that launches Yohaku at sign-in — no admin
-rights required.
+entry under `HKCU\…\CurrentVersion\Run` that launches Yohaku at sign-in, with no
+admin rights required.
 
 ## Tests
 
@@ -93,7 +93,7 @@ Each `Inset*` value is the margin for that edge in logical (96-DPI) pixels, scal
 per monitor by its DPI.
 
 `TaskbarInset` is **optional**. When set, it overrides the inset on whichever edge
-holds the taskbar — but only on monitors where the taskbar actually reserves space,
+holds the taskbar, but only on monitors where the taskbar actually reserves space,
 so an auto-hidden taskbar (or a monitor that doesn't show the taskbar) falls back to
 the normal per-edge inset. Omit it to use the per-edge values everywhere.
 

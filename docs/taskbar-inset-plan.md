@@ -1,4 +1,4 @@
-# Taskbar-side inset — implementation plan
+# Taskbar-side inset: implementation plan
 
 **Status: implemented (Phases 1 & 2).** Unit-tested; live integration PASS path
 still to be run. Kept as the design record.
@@ -9,7 +9,7 @@ use a separate inset value instead of that edge's normal per-edge inset.
 ## Resolved decisions
 
 - **Role-based, not edge-based** (Option B). The override binds to the taskbar's
-  location at runtime, not a fixed geometric edge — so it follows the taskbar
+  location at runtime, not a fixed geometric edge, so it follows the taskbar
   across edges and is correct per-monitor.
 - **Additive semantics.** The override is our inset contribution on the taskbar
   edge; the total gap there is `taskbar thickness + TaskbarInset`. (Same model as
@@ -32,13 +32,13 @@ thickness   = Scale(inset, monitor.DpiScale)                      // physical px
 - `taskbarEdge` comes from `SHAppBarMessage(ABM_GETTASKBARPOS)` (the system
   taskbar's edge; uniform across monitors on Windows 11).
 - `taskbarReservesSpaceHere` comes from this monitor's `rcMonitor` vs `rcWork`
-  gap on `taskbarEdge` — which is exactly the "reserves space" policy.
+  gap on `taskbarEdge`, which is exactly the "reserves space" policy.
 
 This reads cleanly because `rcWork` at build time already excludes our own strips
 (see the ordering note below), so the gap reflects only the taskbar (and any
 foreign appbars) on that edge.
 
-## Phase 1 — core feature
+## Phase 1: core feature
 
 ### 1. `Config.cs`
 
@@ -52,7 +52,7 @@ public int? TaskbarInset { get; set; }
 
 - Backward-compatible: `JsonOpts` already has `WhenWritingNull`, so `null` is
   omitted from the file and existing configs deserialize unchanged.
-- No new validation needed — negative thicknesses are already clamped to ≥0 where
+- No new validation needed: negative thicknesses are already clamped to ≥0 where
   the strip is created.
 
 ### 2. `NativeMethods.cs`
@@ -67,7 +67,7 @@ public const uint ABM_GETTASKBARPOS = 0x00000005;
 `uEdge`. Fallback if `uEdge` ever proves unreliable: derive the edge from `.rc`
 (its thin dimension + which side of the primary monitor it hugs).
 
-### 3. `StripGeometry.cs` — two pure, unit-tested helpers
+### 3. `StripGeometry.cs`: two pure, unit-tested helpers
 
 Keep all the decision logic pure (no Win32 calls, no `Config` dependency), in line
 with the rest of this class:
@@ -89,10 +89,10 @@ public static int PickInset(uint edge, uint taskbarEdge, bool taskbarReservesHer
 `RIGHT = monitor.Right - work.Right`.
 
 Threshold: a small physical constant (e.g. `TaskbarMinReservePx = 4`). A docked
-taskbar reserves tens of px; an auto-hide one ~1px — so any threshold in between
+taskbar reserves tens of px; an auto-hide one ~1px, so any threshold in between
 works, and 4px is safely clear of the sliver at all DPIs.
 
-### 4. `AppBarManager.cs` — wiring
+### 4. `AppBarManager.cs`: wiring
 
 - Add a Win32 helper:
 
@@ -122,12 +122,12 @@ works, and 4px is safely clear of the sliver at all DPIs.
 
 - Add a private `InsetFor(uint edge)` mapping `ABE_*` → `_cfg.InsetTop/Bottom/Left/Right`,
   kept here so `Config` stays free of Win32 constants.
-- If `GetTaskbarEdge()` returns null, no edge gets the override — every edge uses
+- If `GetTaskbarEdge()` returns null, no edge gets the override: every edge uses
   its normal inset (safe fallback, today's behaviour).
 
 Ordering note (load-bearing): `EnumerateMonitors` runs inside `BuildStrips`, which
 runs after `RemoveAll` (and, on rebuild, after the deferred turn that lets the
-appbar subsystem settle the removals). So `rcWork` here excludes our own strips —
+appbar subsystem settle the removals). So `rcWork` here excludes our own strips, so
 the gap measures only the taskbar. This must stay true; if strip teardown is ever
 reordered, the presence check breaks.
 
@@ -149,7 +149,7 @@ reordered, the presence check breaks.
   applies on the taskbar edge only when it reserves space).
 - This file: mark Phase 1 done when it lands.
 
-## Phase 2 — runtime robustness (implemented)
+## Phase 2: runtime robustness (implemented)
 
 Phase 1 re-resolves on every build/rebuild (startup, display change, config reload,
 manual "Rebuild appbars"). It does **not** re-resolve when the taskbar moves edges
@@ -157,7 +157,7 @@ or toggles auto-hide mid-session without a display change, because the repositio
 path reuses each strip's existing thickness.
 
 Fix: cache a lightweight taskbar signature `(edge, autoHide)` from the last build
-(`autoHide` via `ABM_GETSTATE`, which is strip-independent — unlike the per-monitor
+(`autoHide` via `ABM_GETSTATE`, which is strip-independent, unlike the per-monitor
 work-area gap, which our own active strips would skew). In `OnStripPosChanged`,
 recompute it:
 
@@ -165,18 +165,18 @@ recompute it:
 - **Same edge, auto-hide toggled** → debounced `TryReapplyInPlace` (below).
 - **Edge moved** → `ScheduleRebuild()` (the strip layout changes).
 
-### In-place re-pin (`TryReapplyInPlace`) — avoids the teardown flash
+### In-place re-pin (`TryReapplyInPlace`): avoids the teardown flash
 
 A full `Rebuild()` (`RemoveAll` → defer → `BuildStrips`) momentarily drops every
 reservation, so the work area jumps to full and maximised windows bounce out and
-back — visible on each auto-hide toggle and config edit. When the strip *set* is
+back, visible on each auto-hide toggle and config edit. When the strip *set* is
 unchanged, only thicknesses change, so we re-pin in place instead:
 
 1. Two-pass for safety: compute every target thickness (bailing to a rebuild only
    on topology drift or a failed `GetMonitorInfo`), then apply.
 2. The presence check needs the taskbar-only gap, but our strips are now active, so
    recover it by subtracting each strip's own `Thickness` from the current gap
-   (`StripGeometry.EdgeGap`) — no teardown needed to measure cleanly.
+   (`StripGeometry.EdgeGap`), no teardown needed to measure cleanly.
 3. `AppBarStrip.ApplyThickness` (de)registers a strip as its thickness crosses zero
    (so a `TaskbarInset` of 0 toggling on/off is smooth too), and `SetPosition` is
    idempotent, so unchanged edges never move.
