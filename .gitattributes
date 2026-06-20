@@ -1,0 +1,38 @@
+# Normalize line endings: let Git decide on checkin, keep working tree sane.
+* text=auto
+
+# Source and text files
+*.cs        text diff=csharp
+*.csproj    text
+*.props     text
+*.targets   text
+*.slnx      text
+*.sln       text eol=crlf
+*.json      text
+*.manifest  text
+*.config    text
+*.md        text
+*.svg       text
+*.editorconfig text
+*.gitattributes text
+*.gitignore text
+
+# Windows-oriented scripts keep CRLF
+*.ps1       text eol=crlf
+*.psm1      text eol=crlf
+*.psd1      text eol=crlf
+*.cmd       text eol=crlf
+*.bat       text eol=crlf
+
+# Unix shell scripts keep LF
+*.sh        text eol=lf
+
+# Binary assets — never normalize or diff
+*.ico       binary
+*.png       binary
+*.jpg       binary
+*.gif       binary
+*.dll       binary
+*.exe       binary
+*.pdb       binary
+*.snk       binary
