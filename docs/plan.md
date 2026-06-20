@@ -32,13 +32,21 @@ Metadata, `LICENSE` (MIT), and an About tray item are done. Remaining:
   "Download & run" section in the README.
 - **Version bump** when cutting the first public release (currently `0.2.0`).
 
-## Quality-of-life
+## Done: "already running" feedback
 
-- **Run-at-login toggle.** Not implemented; README documents the manual
-  `shell:startup` shortcut. Could add a tray toggle that manages the shortcut (or a
-  `HKCU\...\Run` entry).
-- **"Already running" feedback.** The single-instance guard currently exits the
-  second instance silently; could surface the existing tray icon or a balloon.
+A second launch signals the running instance via a named `EventWaitHandle`; the
+running instance shows a tray balloon ("Yohaku is already running...") and the second
+exits. The signal round-trip is verified in the log (first instance receives the ping
+and calls `ShowBalloonTip`); the balloon's on-screen appearance is pending an eyeball
+check. (A `HWND_BROADCAST` window-message approach was tried first but didn't reach
+the hidden window; the named event is deterministic.)
+
+## Done: run-at-login
+
+A checkable "Start with Windows" tray item (`Startup.cs`) adds or removes a per-user
+`HKCU\...\Run` entry pointing at the current executable, self-healing the path on
+startup if the exe moves. Default off. Verified headlessly (default state, build);
+a real sign-out/in to confirm it launches at login is still pending.
 
 ## Not yet tested
 

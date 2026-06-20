@@ -7,12 +7,13 @@ namespace Yohaku;
 internal static class Program
 {
     private const string SourceUrl = "https://github.com/DavidF-Dev/Yohaku";
-
+    private const string ActivateEventName = "Yohaku.SingleInstance.Activate";
 
     private static AppBarManager? _appbars;
     private static Config _config = new();
     private static NotifyIcon? _tray;
     private static FileSystemWatcher? _watcher;
+    private static EventWaitHandle? _activateEvent;
 
     // Hidden UI-thread window used as a reliable marshaling target for background-thread work (its handle always exists).
     private static Form? _syncRoot;
@@ -25,7 +26,8 @@ internal static class Program
         using var mutex = new Mutex(initiallyOwned: true, "Yohaku.SingleInstance", out bool isNew);
         if (!isNew)
         {
-            Log.Info("Another instance is already running; exiting.");
+            Log.Info("Another instance is already running; notifying it and exiting.");
+            NotifyRunningInstance();
             return;
         }
 
@@ -50,6 +52,7 @@ internal static class Program
 
         SetupTray();
         SetupConfigWatcher();
+        SetupActivationListener();
         Startup.SyncPathIfEnabled();
 
         // Rebuild appbars when monitors are added/removed or resolution/DPI changes.
@@ -149,6 +152,41 @@ internal static class Program
         if (item.Checked) Startup.Enable(); else Startup.Disable();
         // Re-sync the tick from the registry so a failed write doesn't leave it lying.
         item.Checked = Startup.IsEnabled();
+    }
+
+    private static void ShowAlreadyRunningBalloon()
+    {
+        Log.Info("Second instance pinged; showing 'already running' balloon.");
+        _tray?.ShowBalloonTip(3000, "Yohaku 余白", "Yohaku is already running in the system tray.", ToolTipIcon.Info);
+    }
+
+    // Wait on the shared named event; a second instance Sets it to ask us to surface.
+    private static void SetupActivationListener()
+    {
+        try
+        {
+            _activateEvent = new EventWaitHandle(false, EventResetMode.AutoReset, ActivateEventName);
+            ThreadPool.RegisterWaitForSingleObject(_activateEvent, (_, _) =>
+            {
+                // Fires on a thread-pool thread; marshal to the UI thread to touch the tray.
+                if (_syncRoot is { IsHandleCreated: true })
+                    _syncRoot.BeginInvoke(new Action(ShowAlreadyRunningBalloon));
+            }, null, Timeout.Infinite, executeOnlyOnce: false);
+        }
+        catch (Exception ex) { Log.Warn($"Could not set up activation listener: {ex.Message}"); }
+    }
+
+    private static void NotifyRunningInstance()
+    {
+        try
+        {
+            if (EventWaitHandle.TryOpenExisting(ActivateEventName, out var ev))
+            {
+                ev.Set();
+                ev.Dispose();
+            }
+        }
+        catch (Exception ex) { Log.Warn($"Could not notify running instance: {ex.Message}"); }
     }
 
     private static void ShowAbout()
