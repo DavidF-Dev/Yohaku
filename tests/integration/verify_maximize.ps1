@@ -1,21 +1,19 @@
 <#
-  Confirms a maximised window is (a) TRULY maximised and (b) inset from the
-  monitor edges by Yohaku's configured margin — on ANY monitor size, taskbar
-  position, or DPI scale. Run this with Yohaku running.
+  Confirms a maximised window is (a) TRULY maximised, (b) fills the work area, and
+  (c) inset from each monitor edge by Yohaku's configured margin - including the
+  taskbar-side override. Setup-independent (any monitor size, taskbar position, or
+  DPI scale). Run with Yohaku running.
 
-  How it stays setup-independent:
-    * The monitor and its work area are read at runtime (GetMonitorInfo) for the
-      window's own monitor — never hardcoded.
-    * The work area already reflects the taskbar AND Yohaku's reservation, so the
-      visible maximised window should fill it exactly.
-    * The per-edge gap between the full monitor and the work area must be >= the
-      configured inset; the smallest gap (an edge with no taskbar) equals the
-      inset, which is what proves Yohaku is reserving the margin.
-    * The process is made Per-Monitor-V2 DPI aware so GetMonitorInfo and the DWM
-      frame bounds are both in physical pixels and directly comparable; the inset
-      is scaled to physical px via the monitor's real DPI.
+  Pass -TaskbarInset to check the override on the taskbar's edge; omit it to expect
+  the same inset on every edge (the pre-override behaviour).
+
+  Per edge, the monitor-to-work-area gap should equal our reserved inset plus, on
+  the taskbar's edge, the taskbar's own thickness. The process is made
+  Per-Monitor-V2 DPI aware so every measurement is in directly comparable physical
+  pixels, and our inset is scaled to physical px via the monitor's real DPI.
 #>
-param([int]$Inset = 12, [int]$Tolerance = 1)
+param([int]$Inset = 12, [int]$TaskbarInset = -1, [int]$Tolerance = 1)
+if ($TaskbarInset -lt 0) { $TaskbarInset = $Inset }
 
 if (-not ('M' -as [type])) {
 Add-Type @"
@@ -29,9 +27,12 @@ public class M {
   [DllImport("user32.dll")] public static extern IntPtr MonitorFromWindow(IntPtr h, int flags);
   [DllImport("user32.dll")] public static extern bool GetMonitorInfo(IntPtr hMon, ref MONITORINFO mi);
   [DllImport("dwmapi.dll")] public static extern int DwmGetWindowAttribute(IntPtr h, int attr, out RECT r, int sz);
+  [DllImport("shell32.dll")] public static extern UIntPtr SHAppBarMessage(uint msg, ref APPBARDATA d);
   [StructLayout(LayoutKind.Sequential)] public struct RECT { public int L,T,R,B; }
   [StructLayout(LayoutKind.Sequential)] public struct MONITORINFO {
     public int cbSize; public RECT rcMonitor; public RECT rcWork; public int dwFlags; }
+  [StructLayout(LayoutKind.Sequential)] public struct APPBARDATA {
+    public uint cbSize; public IntPtr hWnd; public uint uCallbackMessage; public uint uEdge; public RECT rc; public IntPtr lParam; }
 }
 "@
 }
@@ -41,8 +42,11 @@ public class M {
 Add-Type -AssemblyName System.Windows.Forms
 
 function Pump([int]$ms){ $n=[int]($ms/100); for($i=0;$i -lt $n;$i++){[System.Windows.Forms.Application]::DoEvents();Start-Sleep -Milliseconds 100} }
+function Near($a,$b){ [math]::Abs($a-$b) -le $Tolerance }
 $DWMWA_EXTENDED_FRAME_BOUNDS = 9
 $MONITOR_DEFAULTTONEAREST    = 2
+$ABM_GETSTATE = 4; $ABM_GETTASKBARPOS = 5; $ABS_AUTOHIDE = 1
+$EdgeName = @('Left','Top','Right','Bottom')   # index = ABE_*
 
 $form = New-Object System.Windows.Forms.Form
 $form.Text="Yohaku Verify"; $form.StartPosition='Manual'
@@ -52,49 +56,66 @@ $form.Show(); $form.Refresh(); $h=$form.Handle
 
 [M]::ShowWindow($h,3)|Out-Null; Pump 800   # SW_MAXIMIZE
 
-# Visible bounds (what the user sees) and the window's monitor geometry.
 $vb = New-Object M+RECT; [M]::DwmGetWindowAttribute($h,$DWMWA_EXTENDED_FRAME_BOUNDS,[ref]$vb,16)|Out-Null
 $mon = [M]::MonitorFromWindow($h,$MONITOR_DEFAULTTONEAREST)
 $mi  = New-Object M+MONITORINFO; $mi.cbSize=[System.Runtime.InteropServices.Marshal]::SizeOf($mi)
 [M]::GetMonitorInfo($mon,[ref]$mi)|Out-Null
 $zoomed = [M]::IsZoomed($h)
 $dpi = [M]::GetDpiForWindow($h)
-$insetPx = [int][math]::Round($Inset * $dpi / 96.0)
 
-# Pull each edge into an explicit scalar int. PowerShell can otherwise surface a
-# value-type field as a single-element array, which breaks the arithmetic below.
+# Taskbar edge (ABE_*), its own thickness on that edge, and auto-hide state.
+$abd = New-Object M+APPBARDATA; $abd.cbSize=[System.Runtime.InteropServices.Marshal]::SizeOf($abd)
+if ([M]::SHAppBarMessage($ABM_GETTASKBARPOS,[ref]$abd).ToUInt64() -eq 0) {
+  $tbEdge = -1; $tbThick = 0
+} else {
+  $tbEdge = [int]$abd.uEdge
+  $tbThick = if ($tbEdge -eq 0 -or $tbEdge -eq 2) { [int]$abd.rc.R - [int]$abd.rc.L } else { [int]$abd.rc.B - [int]$abd.rc.T }
+}
+$autoHide = ([M]::SHAppBarMessage($ABM_GETSTATE,[ref]$abd).ToUInt64() -band $ABS_AUTOHIDE) -ne 0
+
+# Pull each edge into an explicit scalar int. PowerShell can otherwise surface a value-type field as a single-element array, which breaks the arithmetic below.
 $bL=[int]$mi.rcMonitor.L; $bT=[int]$mi.rcMonitor.T; $bR=[int]$mi.rcMonitor.R; $bB=[int]$mi.rcMonitor.B
 $wL=[int]$mi.rcWork.L;    $wT=[int]$mi.rcWork.T;    $wR=[int]$mi.rcWork.R;    $wB=[int]$mi.rcWork.B
 $vL=[int]$vb.L;           $vT=[int]$vb.T;           $vR=[int]$vb.R;           $vB=[int]$vb.B
 
-Write-Host ("Monitor (full)     : ({0},{1})-({2},{3})" -f $bL,$bT,$bR,$bB)
-Write-Host ("Work area          : ({0},{1})-({2},{3})" -f $wL,$wT,$wR,$wB)
-Write-Host ("Visible window     : ({0},{1})-({2},{3})" -f $vL,$vT,$vR,$vB)
-Write-Host ("DPI / inset (phys) : {0} / {1}px (from {2}px logical)" -f $dpi,$insetPx,$Inset)
-Write-Host ("IsZoomed           : {0}" -f $zoomed)
-
-# Per-edge gap between the full monitor and the (reserved) work area.
+# Gaps indexed by ABE_*: 0=Left, 1=Top, 2=Right, 3=Bottom.
 $gaps = @(($wL-$bL), ($wT-$bT), ($bR-$wR), ($bB-$wB))
-$minGap = ($gaps | Measure-Object -Minimum).Minimum
-Write-Host ("Edge gaps L,T,R,B  : {0}  (min {1})" -f ($gaps -join ','),$minGap)
+$tbName = if ($tbEdge -ge 0) { $EdgeName[$tbEdge] } else { 'none' }
 
-function Near($a,$b){ [math]::Abs($a-$b) -le $Tolerance }
+Write-Host ("Monitor (full)   : ({0},{1})-({2},{3})" -f $bL,$bT,$bR,$bB)
+Write-Host ("Work area        : ({0},{1})-({2},{3})" -f $wL,$wT,$wR,$wB)
+Write-Host ("Visible window   : ({0},{1})-({2},{3})" -f $vL,$vT,$vR,$vB)
+Write-Host ("DPI              : {0}" -f $dpi)
+Write-Host ("Taskbar          : edge={0} thickness={1}px autoHide={2}" -f $tbName,$tbThick,$autoHide)
+Write-Host ("Inset / taskbar  : {0} / {1}px logical" -f $Inset,$TaskbarInset)
+Write-Host ("Edge gaps L,T,R,B: {0}" -f ($gaps -join ','))
+Write-Host ("IsZoomed         : {0}" -f $zoomed)
 
-# 1) Truly maximised. 2) Visible window fills the reserved work area exactly.
+$why = @()
+for ($e = 0; $e -lt 4; $e++) {
+  # Expected gap = our reserved inset (override on the taskbar edge) + the
+  # taskbar's own thickness where it sits.
+  $logical = if ($e -eq $tbEdge) { $TaskbarInset } else { $Inset }
+  $px = [int][math]::Round($logical * $dpi / 96.0)
+  $tb = if ($e -eq $tbEdge) { $tbThick } else { 0 }
+  $exp = $px + $tb
+  $g = [int]$gaps[$e]
+
+  if ($e -eq $tbEdge -and $autoHide) {
+    Write-Host ("  {0,-6}: gap {1}px - skipped (taskbar auto-hidden; override does not apply)" -f $EdgeName[$e],$g) -ForegroundColor Yellow
+    continue
+  }
+  $status = if (Near $g $exp) { 'ok' } else { $why += ("{0} gap {1}px != expected {2}px (inset {3} + taskbar {4})" -f $EdgeName[$e],$g,$exp,$px,$tb); 'BAD' }
+  Write-Host ("  {0,-6}: gap {1}px  expected {2}px  [{3}]" -f $EdgeName[$e],$g,$exp,$status)
+}
+
 $fillsWork = (Near $vL $wL) -and (Near $vT $wT) -and (Near $vR $wR) -and (Near $vB $wB)
-# 3) Every edge reserves at least the inset; the smallest gap equals the inset
-#    (a non-taskbar edge), proving Yohaku's margin is applied.
-$reserves = ($gaps | Where-Object { $_ -lt ($insetPx - $Tolerance) }).Count -eq 0
-$insetOk  = Near $minGap $insetPx
+if (-not $zoomed)    { $why += "not maximised" }
+if (-not $fillsWork) { $why += "visible window != work area" }
 
-if ($zoomed -and $fillsWork -and $reserves -and $insetOk) {
-  Write-Host "RESULT: PASS - truly maximised, visible window fills the work area, and every edge is inset by $($insetPx)px." -ForegroundColor Green
+if ($why.Count -eq 0) {
+  Write-Host "RESULT: PASS - truly maximised, fills the work area, every edge inset as configured." -ForegroundColor Green
 } else {
-  $why = @()
-  if (-not $zoomed)    { $why += "not maximised" }
-  if (-not $fillsWork) { $why += "visible window != work area" }
-  if (-not $reserves)  { $why += "an edge reserves less than ${insetPx}px" }
-  if (-not $insetOk)   { $why += "smallest gap ${minGap}px != expected ${insetPx}px (is Yohaku running with Inset=${Inset}?)" }
-  Write-Host ("RESULT: FAIL - {0}" -f ($why -join '; ')) -ForegroundColor Red
+  Write-Host ("RESULT: FAIL - {0} (is Yohaku running with Inset=${Inset}, TaskbarInset=${TaskbarInset}?)" -f ($why -join '; ')) -ForegroundColor Red
 }
 $form.Close(); $form.Dispose()

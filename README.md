@@ -83,12 +83,18 @@ session, so it's verified by the PowerShell scripts in `tests/integration/`
   "InsetTop": 12,
   "InsetRight": 12,
   "InsetBottom": 12,
-  "InsetLeft": 12
+  "InsetLeft": 12,
+  "TaskbarInset": 8
 }
 ```
 
-Each value is the margin for that edge in logical (96-DPI) pixels, scaled per
-monitor by its DPI.
+Each `Inset*` value is the margin for that edge in logical (96-DPI) pixels, scaled
+per monitor by its DPI.
+
+`TaskbarInset` is **optional**. When set, it overrides the inset on whichever edge
+holds the taskbar — but only on monitors where the taskbar actually reserves space,
+so an auto-hidden taskbar (or a monitor that doesn't show the taskbar) falls back to
+the normal per-edge inset. Omit it to use the per-edge values everywhere.
 
 ## Logs
 

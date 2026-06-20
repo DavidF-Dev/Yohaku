@@ -76,6 +76,10 @@ Runtime data: `%APPDATA%\Yohaku\config.json` + `yohaku.log`.
   (which fires `ABN_POSCHANGED`) from cascading into an endless reposition loop.
 - **Secondary-monitor appbars** work on the dev machine (3 monitors) but aren't
   guaranteed across every setup — verify if behaviour looks off.
+- **Taskbar-inset presence check reads `rcWork` with our own strips absent.** It
+  works because `EnumerateMonitors` runs inside `BuildStrips`, after `RemoveAll`
+  (and the deferred settle) — so the monitor↔work gap reflects only the taskbar.
+  Reordering teardown would silently corrupt the override decision.
 - **`.slnx`, not `.sln`** — modern XML solution format; `dotnet build/test Yohaku.slnx`
   work natively.
 

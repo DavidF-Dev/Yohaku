@@ -97,4 +97,76 @@ public class StripGeometryTests
         var r = StripGeometry.PinThickness(ABE_RIGHT, approved, 12);
         Assert.Equal(1908, r.Left);
     }
+
+    // ---- EdgeReservesSpace ---------------------------------------------
+
+    private static RECT Work(int l, int t, int r, int b) => new() { Left = l, Top = t, Right = r, Bottom = b };
+
+    [Fact]
+    public void EdgeReservesSpace_true_for_docked_taskbar()
+    {
+        var work = Work(0, 0, 1920, 1040); // 40px reserved at the bottom
+        Assert.True(StripGeometry.EdgeReservesSpace(ABE_BOTTOM, Monitor, work, 4));
+    }
+
+    [Theory]
+    [InlineData(1)]   // auto-hide sliver
+    [InlineData(4)]   // exactly the threshold — not "more than"
+    public void EdgeReservesSpace_false_for_sliver_or_threshold(int gap)
+    {
+        var work = Work(0, 0, 1920, 1080 - gap);
+        Assert.False(StripGeometry.EdgeReservesSpace(ABE_BOTTOM, Monitor, work, 4));
+    }
+
+    [Fact]
+    public void EdgeReservesSpace_false_when_no_reservation()
+    {
+        Assert.False(StripGeometry.EdgeReservesSpace(ABE_BOTTOM, Monitor, Monitor, 4));
+    }
+
+    [Fact]
+    public void EdgeReservesSpace_measures_the_queried_edge_only()
+    {
+        var work = Work(0, 0, 1920, 1040); // taskbar at the bottom
+        Assert.False(StripGeometry.EdgeReservesSpace(ABE_TOP, Monitor, work, 4));
+    }
+
+    [Theory]
+    [InlineData((uint)1, 0, 40, 1920, 1080)]    // ABE_TOP
+    [InlineData((uint)0, 40, 0, 1920, 1080)]    // ABE_LEFT
+    [InlineData((uint)2, 0, 0, 1880, 1080)]     // ABE_RIGHT
+    public void EdgeReservesSpace_true_for_each_orientation(uint edge, int wl, int wt, int wr, int wb)
+    {
+        Assert.True(StripGeometry.EdgeReservesSpace(edge, Monitor, Work(wl, wt, wr, wb), 4));
+    }
+
+    [Fact]
+    public void EdgeReservesSpace_handles_non_zero_monitor_origin()
+    {
+        var secondary = new RECT { Left = -1920, Top = 0, Right = 0, Bottom = 1080 };
+        var work = Work(-1920, 0, 0, 1040); // taskbar at the bottom of the secondary
+        Assert.True(StripGeometry.EdgeReservesSpace(ABE_BOTTOM, secondary, work, 4));
+    }
+
+    // ---- PickInset -----------------------------------------------------
+
+    [Fact]
+    public void PickInset_uses_override_on_reserving_taskbar_edge() =>
+        Assert.Equal(8, StripGeometry.PickInset(ABE_BOTTOM, ABE_BOTTOM, true, 12, 8));
+
+    [Fact]
+    public void PickInset_uses_edge_inset_when_override_is_null() =>
+        Assert.Equal(12, StripGeometry.PickInset(ABE_BOTTOM, ABE_BOTTOM, true, 12, null));
+
+    [Fact]
+    public void PickInset_uses_edge_inset_off_the_taskbar_edge() =>
+        Assert.Equal(12, StripGeometry.PickInset(ABE_TOP, ABE_BOTTOM, true, 12, 8));
+
+    [Fact]
+    public void PickInset_uses_edge_inset_when_taskbar_does_not_reserve() =>
+        Assert.Equal(12, StripGeometry.PickInset(ABE_BOTTOM, ABE_BOTTOM, false, 12, 8));
+
+    [Fact]
+    public void PickInset_uses_edge_inset_when_no_taskbar() =>
+        Assert.Equal(12, StripGeometry.PickInset(ABE_BOTTOM, uint.MaxValue, false, 12, 8));
 }

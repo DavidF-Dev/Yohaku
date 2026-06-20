@@ -37,6 +37,11 @@ internal static class NativeMethods
     public const uint ABM_REMOVE = 0x00000001;
     public const uint ABM_QUERYPOS = 0x00000002;
     public const uint ABM_SETPOS = 0x00000003;
+    public const uint ABM_GETSTATE = 0x00000004;
+    public const uint ABM_GETTASKBARPOS = 0x00000005;
+
+    // ABM_GETSTATE result flag: the taskbar is set to auto-hide.
+    public const uint ABS_AUTOHIDE = 0x00000001;
 
     // uEdge values
     public const uint ABE_LEFT = 0;

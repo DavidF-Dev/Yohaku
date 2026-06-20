@@ -1,5 +1,8 @@
 # Taskbar-side inset — implementation plan
 
+**Status: implemented (Phases 1 & 2).** Unit-tested; live integration PASS path
+still to be run. Kept as the design record.
+
 A taskbar-aware inset override: wherever the taskbar **actually reserves space**,
 use a separate inset value instead of that edge's normal per-edge inset.
 

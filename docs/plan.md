@@ -3,12 +3,14 @@
 Forward-looking work. For how the app is built and the decisions already locked
 in, see `CLAUDE.md`.
 
-## In planning: taskbar-side inset
+## Done: taskbar-side inset
 
-A taskbar-aware inset override — a separate inset on whichever edge actually holds
-the taskbar (e.g. global 12px but 8px on the taskbar side). Design decided
-(role-based, additive, auto-hide = "only when it reserves space"); full build-ready
-breakdown in `taskbar-inset-plan.md`.
+A taskbar-aware inset override (`Config.TaskbarInset`) — a separate inset on
+whichever edge actually holds the taskbar, applied only where it reserves space
+(auto-hide falls back to the normal inset). Phases 1 and 2 implemented and
+unit-tested; runtime re-resolves on taskbar edge move / auto-hide toggle. The only
+unconfirmed piece is the live integration PASS path (see "Not yet tested"). Design
+and breakdown in `taskbar-inset-plan.md`.
 
 ## Next feature: rounded corners
 
@@ -48,5 +50,8 @@ Metadata, `LICENSE` (MIT), and an About tray item are done. Remaining:
 - **Mixed-DPI monitors** — all dev monitors share a DPI. The `newScale/oldScale`
   scaling is in code but unverified on genuinely mixed-DPI setups.
 - **`verify_maximize.ps1` PASS path** — the script is generalized for any
-  resolution/taskbar/DPI, but its PASS branch has only been confirmed against the
-  dev machine; the FAIL path is exercised when Yohaku isn't running.
+  resolution/taskbar/DPI and now checks the per-edge `TaskbarInset` override, but
+  its PASS branch hasn't been run live yet (needs Yohaku running with a
+  `TaskbarInset` set); the FAIL path is exercised when Yohaku isn't running.
+- **Taskbar moved / auto-hide toggled at runtime** — Phase 2 rebuilds on a changed
+  taskbar signature, but this has only been reasoned through, not exercised live.

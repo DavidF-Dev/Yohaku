@@ -12,6 +12,10 @@ public sealed class Config
     public int InsetBottom { get; set; } = 12;
     public int InsetLeft { get; set; } = 12;
 
+    /// <summary>Inset for the edge that holds the taskbar, in logical (96-DPI)
+    /// pixels. Null means that edge uses its normal per-edge inset.</summary>
+    public int? TaskbarInset { get; set; }
+
     // ---- Persistence ---------------------------------------------------
 
     private static readonly JsonSerializerOptions JsonOpts = new()

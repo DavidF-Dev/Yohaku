@@ -47,4 +47,24 @@ public class ConfigTests
         Assert.Equal(30, cfg.InsetBottom);
         Assert.Equal(30, cfg.InsetLeft);
     }
+
+    [Fact]
+    public void TaskbarInset_defaults_to_null() =>
+        Assert.Null(new Config().TaskbarInset);
+
+    [Fact]
+    public void TaskbarInset_round_trips()
+    {
+        var restored = Config.Deserialize(Config.Serialize(new Config { TaskbarInset = 8 }));
+        Assert.NotNull(restored);
+        Assert.Equal(8, restored!.TaskbarInset);
+    }
+
+    [Fact]
+    public void TaskbarInset_is_omitted_from_json_when_null() =>
+        Assert.DoesNotContain("TaskbarInset", Config.Serialize(new Config()));
+
+    [Fact]
+    public void TaskbarInset_missing_field_is_null() =>
+        Assert.Null(Config.Deserialize("{}")!.TaskbarInset);
 }

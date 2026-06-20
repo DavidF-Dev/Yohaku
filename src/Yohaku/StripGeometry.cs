@@ -14,6 +14,34 @@ internal static class StripGeometry
         (int)Math.Round(logical * Math.Max(0.0, dpiScale));
 
     /// <summary>
+    /// True when the work area is inset from the monitor on <paramref name="edge"/>
+    /// by more than <paramref name="minReservePx"/> physical pixels — i.e. a taskbar
+    /// genuinely reserves space there rather than leaving only an auto-hide sliver.
+    /// </summary>
+    public static bool EdgeReservesSpace(uint edge, RECT monitor, RECT work, int minReservePx) =>
+        EdgeGap(edge, monitor, work) > minReservePx;
+
+    /// <summary>
+    /// The logical inset to reserve on <paramref name="edge"/>: the taskbar override
+    /// when this edge holds a space-reserving taskbar and an override is set,
+    /// otherwise the edge's own inset.
+    /// </summary>
+    public static int PickInset(uint edge, uint taskbarEdge, bool taskbarReservesHere,
+                                int edgeInset, int? taskbarInset) =>
+        edge == taskbarEdge && taskbarReservesHere && taskbarInset.HasValue
+            ? taskbarInset.Value
+            : edgeInset;
+
+    private static int EdgeGap(uint edge, RECT monitor, RECT work) => edge switch
+    {
+        ABE_TOP => work.Top - monitor.Top,
+        ABE_BOTTOM => monitor.Bottom - work.Bottom,
+        ABE_LEFT => work.Left - monitor.Left,
+        ABE_RIGHT => monitor.Right - work.Right,
+        _ => 0,
+    };
+
+    /// <summary>
     /// Initial desired reservation rectangle for an edge: a full-edge strip of the
     /// given thickness flush against that edge of the monitor.
     /// </summary>
