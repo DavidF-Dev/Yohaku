@@ -13,7 +13,7 @@
 
     <!-- Published metadata (surfaces in the EXE's Details tab and any package manifest). -->
     <Product>Yohaku</Product>
-    <AssemblyTitle>Yohaku: margin around maximised windows</AssemblyTitle>
+    <AssemblyTitle>Yohaku</AssemblyTitle>
     <Description>A lightweight Windows 11 tray app that reserves a configurable margin around every monitor, so maximised and snapped windows get a gap from the screen edges while staying genuinely maximised.</Description>
     <Authors>David F Dev</Authors>
     <Company>David F Dev</Company>

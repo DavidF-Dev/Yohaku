@@ -50,6 +50,11 @@ try {
 
     if (git status --porcelain) { Fail 'working tree is dirty; commit or stash changes first' }
 
+    # HEAD must be pushed: gh tags the remote, so the released commit has to exist there.
+    git rev-parse --symbolic-full-name '@{u}' 2>$null | Out-Null
+    if ($LASTEXITCODE -ne 0) { Fail 'current branch has no upstream; push it first (git push -u origin HEAD)' }
+    if ([int](git rev-list --count '@{u}..HEAD') -ne 0) { Fail 'HEAD is ahead of the remote; push first (git push)' }
+
     if (git tag --list $tag) { Fail "tag $tag already exists" }
     gh release view $tag 2>$null | Out-Null
     if ($LASTEXITCODE -eq 0) { Fail "release $tag already exists" }

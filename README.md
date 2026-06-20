@@ -7,6 +7,8 @@ screen edges, while staying **genuinely maximised**.
 > *Yohaku* (余白) is the Japanese term for intentional blank space: the margin
 > left around the content. That's exactly what this app reserves.
 
+![A maximised window inset by a margin from the screen edges](.github/preview.png)
+
 ## How it works
 
 In Windows 11 a maximised window fills the monitor **work area** (`rcWork`, the
@@ -23,31 +25,31 @@ correct "restore down" caption-button glyph, and apps receive `SIZE_MAXIMIZED`.
 There's no window-hijacking, no flash, no DLL injection, and it works on every
 app including elevated/protected ones.
 
-### What it does / doesn't do
+### Features
 
 - ✅ Truly maximised windows, inset by a per-edge margin, on every monitor.
+- ✅ A separate inset for the taskbar's edge (`TaskbarInset`), with auto-hide handled.
 - ✅ Per-monitor DPI scaling so the gap looks consistent across mixed-DPI setups.
 - ✅ Rebuilds automatically when monitors are added/removed or resolution/DPI
   changes; releases all reservations on exit.
-- ⬜ **Rounded corners are not applied yet.** A truly-maximised window is square
-  by OS design (DWM suppresses rounding for the maximised state). Because this
-  approach guarantees a gap, rounded corners can be faked later with
-  `SetWindowRgn`, a planned follow-up.
-- ℹ️ The margin is **global**: it applies to all maximised/snapped windows and
-  reflows the desktop work area. It is not per-application.
 
 Fullscreen games are unaffected: exclusive fullscreen isn't a window state, and
 borderless-fullscreen windows aren't maximised, so neither is constrained by the
 work area.
 
-## Build & run
+## Download & run
 
-```powershell
-dotnet build Yohaku.slnx -c Release
-.\src\Yohaku\bin\Release\net8.0-windows\Yohaku.exe
-```
+Grab the latest **`Yohaku-<version>.exe`** from the
+[Releases](https://github.com/DavidF-Dev/Yohaku/releases) page and run it. It's one
+self-contained executable: no installer, and no .NET runtime to install.
 
-Runs in the system tray.
+- **Requires** Windows 11 (64-bit).
+- **Unsigned:** Windows SmartScreen will warn with "Windows protected your PC". Click
+  **More info → Run anyway**. Each release publishes the exe's **SHA-256** so you can
+  verify the download (`Get-FileHash Yohaku-<version>.exe`).
+
+Yohaku runs in the system tray; right-click the icon for options. See
+[CHANGELOG.md](CHANGELOG.md) for what's in each release.
 
 > Always quit via the tray **Exit** (or let Windows shut it down) so the appbar
 > reservations are released cleanly. If the process is force-killed, Windows
@@ -58,6 +60,13 @@ Runs in the system tray.
 Toggle **Start with Windows** in the tray menu. It adds (or removes) a per-user
 entry under `HKCU\…\CurrentVersion\Run` that launches Yohaku at sign-in, with no
 admin rights required.
+
+## Build from source
+
+```powershell
+dotnet build Yohaku.slnx -c Release
+.\src\Yohaku\bin\Release\net8.0-windows\Yohaku.exe
+```
 
 ## Tests
 
