@@ -8,9 +8,9 @@ in, see `CLAUDE.md`.
 A taskbar-aware inset override (`Config.TaskbarInset`) — a separate inset on
 whichever edge actually holds the taskbar, applied only where it reserves space
 (auto-hide falls back to the normal inset). Phases 1 and 2 implemented and
-unit-tested; runtime re-resolves on taskbar edge move / auto-hide toggle. The only
-unconfirmed piece is the live integration PASS path (see "Not yet tested"). Design
-and breakdown in `taskbar-inset-plan.md`.
+unit-tested; runtime re-resolves on taskbar edge move / auto-hide toggle. Verified
+live: `verify_maximize.ps1 -Inset 12 -TaskbarInset 8` PASSes on a Top-edge taskbar.
+Design and breakdown in `taskbar-inset-plan.md`.
 
 ## Next feature: rounded corners
 
@@ -49,9 +49,5 @@ Metadata, `LICENSE` (MIT), and an About tray item are done. Remaining:
   not real add/remove of a monitor.
 - **Mixed-DPI monitors** — all dev monitors share a DPI. The `newScale/oldScale`
   scaling is in code but unverified on genuinely mixed-DPI setups.
-- **`verify_maximize.ps1` PASS path** — the script is generalized for any
-  resolution/taskbar/DPI and now checks the per-edge `TaskbarInset` override, but
-  its PASS branch hasn't been run live yet (needs Yohaku running with a
-  `TaskbarInset` set); the FAIL path is exercised when Yohaku isn't running.
 - **Taskbar moved / auto-hide toggled at runtime** — Phase 2 rebuilds on a changed
   taskbar signature, but this has only been reasoned through, not exercised live.
