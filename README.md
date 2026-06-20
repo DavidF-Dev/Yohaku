@@ -1,5 +1,7 @@
 # Yohaku 余白
 
+[![CI](https://github.com/DavidF-Dev/Yohaku/actions/workflows/ci.yml/badge.svg)](https://github.com/DavidF-Dev/Yohaku/actions/workflows/ci.yml)
+
 A lightweight Windows 11 background (tray) app that adds a configurable **margin
 around every monitor**, so maximised (and snapped) windows get a gap from the
 screen edges, while staying **genuinely maximised**.

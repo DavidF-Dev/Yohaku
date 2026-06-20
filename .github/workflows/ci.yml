@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-test:
+    # Windows is required: the app targets net8.0-windows (WinForms) and won't build on Linux.
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # 8.0 provides the net8.0-windows desktop targeting pack; 10.0 (the dev SDK)
+      # can parse the .slnx solution format. The highest installed SDK is used.
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Build
+        run: dotnet build Yohaku.slnx -c Release -p:TreatWarningsAsErrors=true --nologo
+
+      - name: Test
+        run: dotnet test Yohaku.slnx -c Release --no-build --nologo
+
+# Note: the integration scripts in tests/integration need a live desktop session and
+# are not part of `dotnet test`, so CI covers the build and the unit tests only.
