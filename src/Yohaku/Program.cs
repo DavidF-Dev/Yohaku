@@ -108,7 +108,7 @@ internal static class Program
         _tray = new NotifyIcon
         {
             Icon = LoadTrayIcon(),
-            Text = "Yohaku 余白 — margin around maximised windows",
+            Text = "Yohaku 余白",
             Visible = true,
             ContextMenuStrip = menu,
         };
