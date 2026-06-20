@@ -3,6 +3,13 @@
 Forward-looking work. For how the app is built and the decisions already locked
 in, see `CLAUDE.md`.
 
+## In planning: taskbar-side inset
+
+A taskbar-aware inset override — a separate inset on whichever edge actually holds
+the taskbar (e.g. global 12px but 8px on the taskbar side). Design decided
+(role-based, additive, auto-hide = "only when it reserves space"); full build-ready
+breakdown in `taskbar-inset-plan.md`.
+
 ## Next feature: rounded corners
 
 The agreed next feature. Now viable via `SetWindowRgn` because the appbar gap
