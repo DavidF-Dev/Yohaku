@@ -69,6 +69,9 @@ internal static class Program
         _tray?.Dispose();
         _syncRoot?.Dispose();
         Log.Info("Yohaku exited; appbars removed.");
+
+        // A lingering non-background thread keeps the process alive after exit; hard-terminate now that reservations are released (Environment.Exit deadlocks on STA finalization here).
+        Process.GetCurrentProcess().Kill();
     }
 
     private static void OnDisplaySettingsChanged(object? sender, EventArgs e)
