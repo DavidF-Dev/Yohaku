@@ -28,8 +28,8 @@ Metadata, `LICENSE` (MIT), About tray item, version `1.0.0`, and `CHANGELOG.md` 
 place. `scripts/publish.ps1` produces a self-contained, single-file
 `dist/Yohaku-<version>.exe` (unsigned, with a published SHA-256); `scripts/release.ps1`
 cuts the GitHub release (guard rails, CHANGELOG notes, confirm prompt). The README has
-a "Download & run" section. Remaining: run `release.ps1` to cut 1.0.0 once the last
-live check (run-at-login) passes.
+a "Download & run" section. All release-blocking live checks pass; remaining step is to
+run `release.ps1` to cut 1.0.0.
 
 ## Done: "already running" feedback
 
@@ -43,16 +43,15 @@ didn't reach the hidden window; the named event is deterministic.)
 
 A checkable "Start with Windows" tray item (`Startup.cs`) adds or removes a per-user
 `HKCU\...\Run` entry pointing at the current executable, self-healing the path on
-startup if the exe moves. Default off. A real sign-out/in to confirm it relaunches at
-login is the one remaining live check (see "Not yet tested").
+startup if the exe moves. Default off. Verified live: relaunches at login after a
+sign-out/in.
 
 ## Not yet tested
 
-Verified live so far: core margin + `TaskbarInset`, the auto-hide toggle (smooth, no
-flash), the "already running" balloon, clean exit, and multi-monitor. Still open:
+Verified live: core margin + `TaskbarInset`, the auto-hide toggle (smooth, no flash),
+the "already running" balloon, clean exit, run-at-login (across a restart), and
+multi-monitor. The remaining items are non-blocking edge cases:
 
-- **Run-at-login across a real restart** (the last release-blocking check). Implemented
-  and headlessly verified; a sign-out/in to confirm it relaunches is pending.
 - **Monitor hot-plug**: only the identical reload-rebuild path has been exercised,
   not real add/remove of a monitor.
 - **Mixed-DPI monitors**: all dev monitors share a DPI. The `newScale/oldScale`
