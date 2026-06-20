@@ -55,8 +55,9 @@ Runs in the system tray.
 
 ### Run at login (optional)
 
-Put a shortcut to the built `Yohaku.exe` in `shell:startup`
-(`%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup`).
+Toggle **Start with Windows** in the tray menu. It adds (or removes) a per-user
+entry under `HKCU\…\CurrentVersion\Run` that launches Yohaku at sign-in — no admin
+rights required.
 
 ## Tests
 

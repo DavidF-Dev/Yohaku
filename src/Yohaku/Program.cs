@@ -50,6 +50,7 @@ internal static class Program
 
         SetupTray();
         SetupConfigWatcher();
+        Startup.SyncPathIfEnabled();
 
         // Rebuild appbars when monitors are added/removed or resolution/DPI changes.
         SystemEvents.DisplaySettingsChanged += OnDisplaySettingsChanged;
@@ -91,6 +92,15 @@ internal static class Program
         menu.Items.Add("Reload config", null, (_, _) => ReloadConfig());
         menu.Items.Add("Rebuild appbars", null, (_, _) => _appbars?.Rebuild());
         menu.Items.Add("Open log folder", null, (_, _) => OpenLogFolder());
+
+        var startupItem = new ToolStripMenuItem("Start with Windows")
+        {
+            CheckOnClick = true,
+            Checked = Startup.IsEnabled(),
+        };
+        startupItem.Click += (_, _) => ToggleStartup(startupItem);
+        menu.Items.Add(startupItem);
+
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("About Yohaku…", null, (_, _) => ShowAbout());
         menu.Items.Add("Exit", null, (_, _) => Application.Exit());
@@ -132,6 +142,13 @@ internal static class Program
     {
         try { Process.Start(new ProcessStartInfo(Config.ConfigDir) { UseShellExecute = true }); }
         catch (Exception ex) { Log.Warn($"Could not open log folder: {ex.Message}"); }
+    }
+
+    private static void ToggleStartup(ToolStripMenuItem item)
+    {
+        if (item.Checked) Startup.Enable(); else Startup.Disable();
+        // Re-sync the tick from the registry so a failed write doesn't leave it lying.
+        item.Checked = Startup.IsEnabled();
     }
 
     private static void ShowAbout()
