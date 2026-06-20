@@ -8,9 +8,12 @@ in, see `CLAUDE.md`.
 A taskbar-aware inset override (`Config.TaskbarInset`) — a separate inset on
 whichever edge actually holds the taskbar, applied only where it reserves space
 (auto-hide falls back to the normal inset). Phases 1 and 2 implemented and
-unit-tested; runtime re-resolves on taskbar edge move / auto-hide toggle. Verified
-live: `verify_maximize.ps1 -Inset 12 -TaskbarInset 8` PASSes on a Top-edge taskbar.
-Design and breakdown in `taskbar-inset-plan.md`.
+unit-tested; runtime re-resolves on taskbar edge move / auto-hide toggle. Auto-hide
+toggles and config edits re-pin strips **in place** (registering/unregistering
+across a zero inset) rather than tearing down, so they no longer flash. Verified
+live: `verify_maximize.ps1` PASSes on a Top-edge taskbar, and config reloads across
+the zero boundary log "applied in place" with correct geometry. Design and breakdown
+in `taskbar-inset-plan.md`.
 
 ## Next feature: rounded corners
 
@@ -49,5 +52,9 @@ Metadata, `LICENSE` (MIT), and an About tray item are done. Remaining:
   not real add/remove of a monitor.
 - **Mixed-DPI monitors** — all dev monitors share a DPI. The `newScale/oldScale`
   scaling is in code but unverified on genuinely mixed-DPI setups.
-- **Taskbar moved / auto-hide toggled at runtime** — Phase 2 rebuilds on a changed
-  taskbar signature, but this has only been reasoned through, not exercised live.
+- **Auto-hide setting toggled live** — the in-place re-pin is verified via config
+  reload across the zero boundary, and the OS auto-hide toggle routes through the
+  same `TryReapplyInPlace`, but toggling the actual taskbar setting hasn't been
+  confirmed end-to-end on the desktop.
+- **Taskbar edge moved at runtime** — still triggers a full rebuild (not in-place);
+  reasoned through, not exercised live.

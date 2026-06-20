@@ -32,7 +32,11 @@ internal static class StripGeometry
             ? taskbarInset.Value
             : edgeInset;
 
-    private static int EdgeGap(uint edge, RECT monitor, RECT work) => edge switch
+    /// <summary>
+    /// How far the work area is inset from the monitor on <paramref name="edge"/>, in
+    /// physical pixels — the space reserved there by the taskbar and any appbars.
+    /// </summary>
+    public static int EdgeGap(uint edge, RECT monitor, RECT work) => edge switch
     {
         ABE_TOP => work.Top - monitor.Top,
         ABE_BOTTOM => monitor.Bottom - work.Bottom,

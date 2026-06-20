@@ -148,6 +148,18 @@ public class StripGeometryTests
         Assert.True(StripGeometry.EdgeReservesSpace(ABE_BOTTOM, secondary, work, 4));
     }
 
+    // ---- EdgeGap -------------------------------------------------------
+
+    [Fact]
+    public void EdgeGap_measures_reserved_space_per_edge()
+    {
+        var work = Work(0, 38, 1880, 1040); // top 38, right 40, bottom 40, left 0
+        Assert.Equal(38, StripGeometry.EdgeGap(ABE_TOP, Monitor, work));
+        Assert.Equal(40, StripGeometry.EdgeGap(ABE_BOTTOM, Monitor, work));
+        Assert.Equal(0, StripGeometry.EdgeGap(ABE_LEFT, Monitor, work));
+        Assert.Equal(40, StripGeometry.EdgeGap(ABE_RIGHT, Monitor, work));
+    }
+
     // ---- PickInset -----------------------------------------------------
 
     [Fact]

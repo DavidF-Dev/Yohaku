@@ -19,8 +19,13 @@ public sealed class AppBarManager : IDisposable
     private readonly System.Windows.Forms.Timer _repositionTimer;
     // One-shot defer between teardown and re-create: the appbar subsystem must process the ABM_REMOVE messages before we register replacements, or the new reservations stay inert.
     private readonly System.Windows.Forms.Timer _deferredBuildTimer;
+    // Debounced in-place re-pin (taskbar auto-hide toggle / config edit) — avoids the teardown flash of a full rebuild.
+    private readonly System.Windows.Forms.Timer _reapplyTimer;
     private bool _repositioning;
     private bool _disposed;
+
+    // Monitors backing the current strips, in the same order; _strips holds EdgeOrder.Length entries per monitor.
+    private List<MonitorData> _monitors = new();
 
     // A docked taskbar reserves tens of px; an auto-hidden one only a ~1px sliver.
     private const int TaskbarMinReservePx = 4;
@@ -40,13 +45,19 @@ public sealed class AppBarManager : IDisposable
         _repositionTimer.Tick += (_, _) => { _repositionTimer.Stop(); RepositionAll(); };
         _deferredBuildTimer = new System.Windows.Forms.Timer { Interval = 100 };
         _deferredBuildTimer.Tick += (_, _) => { _deferredBuildTimer.Stop(); if (!_disposed) BuildStrips(); };
+        // Short settle so a burst of taskbar notifications collapses into one re-pin.
+        _reapplyTimer = new System.Windows.Forms.Timer { Interval = 200 };
+        _reapplyTimer.Tick += (_, _) => { _reapplyTimer.Stop(); if (!_disposed && !TryReapplyInPlace()) Rebuild(); };
     }
 
     public void ApplyConfig(Config cfg)
     {
         _cfg = cfg;
-        Rebuild();
-        Log.Info("Configuration applied; appbars rebuilt.");
+        // Only thicknesses change on a config edit (same monitors/edges), so re-pin in place; fall back to a full rebuild if that isn't possible.
+        if (TryReapplyInPlace())
+            Log.Info("Configuration applied in place.");
+        else
+            Rebuild();
     }
 
     // ---- Build / teardown ---------------------------------------------
@@ -64,7 +75,8 @@ public sealed class AppBarManager : IDisposable
         _lastTaskbarSignature = taskbar;
         uint taskbarEdge = taskbar.edge ?? uint.MaxValue;
 
-        foreach (var mon in EnumerateMonitors())
+        _monitors = EnumerateMonitors();
+        foreach (var mon in _monitors)
         {
             foreach (var edge in EdgeOrder)
             {
@@ -135,14 +147,70 @@ public sealed class AppBarManager : IDisposable
     {
         if (_disposed || _repositioning) return; // ignore our own induced changes
 
-        // A taskbar edge move or auto-hide toggle changes which edge gets the override, so rebuild; lesser appbar moves only need a reposition.
-        if (GetTaskbarSignature() != _lastTaskbarSignature)
+        var sig = GetTaskbarSignature();
+        if (sig == _lastTaskbarSignature)
         {
-            ScheduleRebuild();
+            _repositionTimer.Stop();
+            _repositionTimer.Start();
             return;
         }
-        _repositionTimer.Stop();
-        _repositionTimer.Start();
+        // Same edge, different auto-hide state: only the taskbar-edge inset flips, so re-pin in place (no teardown flash). An edge move changes the layout, so rebuild.
+        if (sig.edge == _lastTaskbarSignature.edge)
+        {
+            _reapplyTimer.Stop();
+            _reapplyTimer.Start();
+        }
+        else
+        {
+            ScheduleRebuild();
+        }
+    }
+
+    /// <summary>
+    /// Re-resolve and re-pin each strip's thickness in place — no teardown — when the
+    /// strip set is unchanged (config edit, or taskbar auto-hide toggle). Returns false
+    /// if a full rebuild is needed instead (topology drift, or a strip would have to
+    /// register/unregister), leaving all strips untouched.
+    /// </summary>
+    private bool TryReapplyInPlace()
+    {
+        if (_disposed || _strips.Count != _monitors.Count * EdgeOrder.Length) return false;
+
+        var sig = GetTaskbarSignature();
+        uint taskbarEdge = sig.edge ?? uint.MaxValue;
+
+        // Pass 1: compute every target thickness and validate; mutate nothing yet.
+        var targets = new int[_strips.Count];
+        for (int i = 0; i < _monitors.Count; i++)
+        {
+            var mi = new MONITORINFO { cbSize = Marshal.SizeOf<MONITORINFO>() };
+            if (!GetMonitorInfo(_monitors[i].Handle, ref mi)) return false;
+
+            for (int e = 0; e < EdgeOrder.Length; e++)
+            {
+                int idx = i * EdgeOrder.Length + e;
+                var strip = _strips[idx];
+                uint edge = EdgeOrder[e];
+                // Back our own reservation out of the current gap to recover the taskbar-only gap (our strips are still active, unlike during BuildStrips).
+                int taskbarGap = StripGeometry.EdgeGap(edge, mi.rcMonitor, mi.rcWork) - strip.Thickness;
+                bool reserves = edge == taskbarEdge && taskbarGap > TaskbarMinReservePx;
+                int inset = StripGeometry.PickInset(edge, taskbarEdge, reserves, InsetFor(edge), _cfg.TaskbarInset);
+                targets[idx] = StripGeometry.Scale(inset, _monitors[i].Scale);
+            }
+        }
+
+        // Pass 2: apply. ApplyThickness (de)registers across zero and SetPosition is idempotent, so unchanged edges don't move.
+        _repositioning = true;
+        try
+        {
+            for (int idx = 0; idx < _strips.Count; idx++)
+                _strips[idx].ApplyThickness(targets[idx]);
+        }
+        finally { _repositioning = false; }
+
+        _lastTaskbarSignature = sig;
+        Log.Info("AppBars re-applied in place.");
+        return true;
     }
 
     private void RepositionAll()
@@ -170,6 +238,7 @@ public sealed class AppBarManager : IDisposable
 
     private sealed class MonitorData
     {
+        public IntPtr Handle;
         public RECT Monitor;
         public RECT Work;
         public double Scale = 1.0;
@@ -188,7 +257,7 @@ public sealed class AppBarManager : IDisposable
                 double scale = 1.0;
                 if (GetDpiForMonitor(hMon, MDT_EFFECTIVE_DPI, out var dpiX, out _) == 0 && dpiX > 0)
                     scale = dpiX / 96.0;
-                list.Add(new MonitorData { Monitor = mi.rcMonitor, Work = mi.rcWork, Scale = scale });
+                list.Add(new MonitorData { Handle = hMon, Monitor = mi.rcMonitor, Work = mi.rcWork, Scale = scale });
             }
             return true;
         };
@@ -204,6 +273,7 @@ public sealed class AppBarManager : IDisposable
         _rebuildTimer.Dispose();
         _repositionTimer.Dispose();
         _deferredBuildTimer.Dispose();
+        _reapplyTimer.Dispose();
         RemoveAll();
     }
 }
