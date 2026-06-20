@@ -15,18 +15,12 @@ live: `verify_maximize.ps1` PASSes on a Top-edge taskbar, and config reloads acr
 the zero boundary log "applied in place" with correct geometry. Design and breakdown
 in `taskbar-inset-plan.md`.
 
-## Next feature: rounded corners
+## Deferred: rounded corners
 
-The agreed next feature. Now viable via `SetWindowRgn` because the appbar gap
-guarantees space around the window — a clipped corner reveals wallpaper instead of
-cutting content.
-
-- Apply a rounded region to maximised top-level windows: watch for maximise with
-  `SetWinEventHook`, reapply on size change, and **remove the region on restore**.
-- Caveats: aliased corners (not the smooth DWM curve) and loss of the DWM drop
-  shadow.
-- `NativeMethods` still carries the DWM corner P/Invoke from the old fake-maximise
-  approach; `SetWindowRgn` would be new.
+Deferred by decision — hard corners look fine, and the only viable mechanism
+(`SetWindowRgn`) carries real caveats (aliased corners, likely no shadow, elevated
+apps stay square). Not worth the cost for now. Full option survey and a spike-first
+plan kept in `rounded-corners-plan.md` if this is ever revisited.
 
 ## Publishing readiness
 
