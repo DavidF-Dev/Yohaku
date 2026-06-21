@@ -30,36 +30,6 @@ internal sealed class AppBarStrip : NativeWindow
     public RECT ReservedRect { get; private set; }
     public int Thickness => _thickness;
 
-    /// <summary>
-    /// Re-resolve this strip to a new thickness in place, (de)registering as the
-    /// thickness crosses zero, then reposition. The window handle is retained either
-    /// way so the strip can re-reserve later without being recreated.
-    /// </summary>
-    public void ApplyThickness(int thickness)
-    {
-        _thickness = Math.Max(0, thickness);
-
-        if (_thickness == 0)
-        {
-            if (_registered)
-            {
-                var abd = NewData();
-                SHAppBarMessage(ABM_REMOVE, ref abd);
-                _registered = false;
-                ReservedRect = default;
-            }
-            return;
-        }
-
-        if (!_registered)
-        {
-            var abd = NewData();
-            SHAppBarMessage(ABM_NEW, ref abd);
-            _registered = true;
-        }
-        SetPosition();
-    }
-
     public AppBarStrip(uint edge, RECT monitorBounds, int thickness, Action onPosChanged)
     {
         _edge = edge;
@@ -112,6 +82,36 @@ internal sealed class AppBarStrip : NativeWindow
 
         SHAppBarMessage(ABM_SETPOS, ref abd);
         ReservedRect = abd.rc;
+    }
+
+    /// <summary>
+    /// Re-resolve this strip to a new thickness in place, (de)registering as the
+    /// thickness crosses zero, then reposition. The window handle is retained either
+    /// way so the strip can re-reserve later without being recreated.
+    /// </summary>
+    public void ApplyThickness(int thickness)
+    {
+        _thickness = Math.Max(0, thickness);
+
+        if (_thickness == 0)
+        {
+            if (_registered)
+            {
+                var abd = NewData();
+                SHAppBarMessage(ABM_REMOVE, ref abd);
+                _registered = false;
+                ReservedRect = default;
+            }
+            return;
+        }
+
+        if (!_registered)
+        {
+            var abd = NewData();
+            SHAppBarMessage(ABM_NEW, ref abd);
+            _registered = true;
+        }
+        SetPosition();
     }
 
     public void Remove()

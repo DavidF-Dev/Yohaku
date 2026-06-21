@@ -89,7 +89,7 @@ public sealed class AppBarManager : IDisposable
             }
         }
 
-        Log.Info($"AppBars built: {_strips.Count} strips across {_strips.Count / 4} monitor(s).");
+        Log.Info($"AppBars built: {_strips.Count} strips across {_strips.Count / EdgeOrder.Length} monitor(s).");
     }
 
     private int InsetFor(uint edge) => edge switch
@@ -191,7 +191,7 @@ public sealed class AppBarManager : IDisposable
                 int idx = i * EdgeOrder.Length + e;
                 var strip = _strips[idx];
                 uint edge = EdgeOrder[e];
-                // Back our own reservation out of the current gap to recover the taskbar-only gap (our strips are still active, unlike during BuildStrips).
+                // Back our own reservation out of the current gap to recover the taskbar-only gap (our strips are active here, so the gap already includes them).
                 int taskbarGap = StripGeometry.EdgeGap(edge, mi.rcMonitor, mi.rcWork) - strip.Thickness;
                 bool reserves = edge == taskbarEdge && taskbarGap > TaskbarMinReservePx;
                 int inset = StripGeometry.PickInset(edge, taskbarEdge, reserves, InsetFor(edge), _cfg.TaskbarInset);
@@ -251,7 +251,7 @@ public sealed class AppBarManager : IDisposable
         // Delegate kept in a local so it isn't collected during the (synchronous) call.
         MonitorEnumProc cb = (IntPtr hMon, IntPtr hdc, ref RECT r, IntPtr data) =>
         {
-            var mi = new MONITORINFO { cbSize = System.Runtime.InteropServices.Marshal.SizeOf<MONITORINFO>() };
+            var mi = new MONITORINFO { cbSize = Marshal.SizeOf<MONITORINFO>() };
             if (GetMonitorInfo(hMon, ref mi))
             {
                 double scale = 1.0;

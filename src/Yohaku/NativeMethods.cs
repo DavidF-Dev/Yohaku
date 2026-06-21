@@ -50,10 +50,8 @@ internal static class NativeMethods
     public const uint ABE_BOTTOM = 3;
 
     // Notification codes delivered via the appbar's uCallbackMessage (wParam)
-    public const int ABN_STATECHANGE = 0x0000;
     public const int ABN_POSCHANGED = 0x0001;
     public const int ABN_FULLSCREENAPP = 0x0002;
-    public const int ABN_WINDOWARRANGE = 0x0003;
 
     [DllImport("shell32.dll", CallingConvention = CallingConvention.StdCall)]
     public static extern UIntPtr SHAppBarMessage(uint dwMessage, ref APPBARDATA pData);
@@ -81,19 +79,4 @@ internal static class NativeMethods
 
     [DllImport("shcore.dll")]
     public static extern int GetDpiForMonitor(IntPtr hmonitor, int dpiType, out uint dpiX, out uint dpiY);
-
-    // ---- DWM corner preference (reserved for later rounded-corner work) -
-
-    public const int DWMWA_WINDOW_CORNER_PREFERENCE = 33;
-
-    public enum DwmWindowCornerPreference
-    {
-        Default = 0,
-        DoNotRound = 1,
-        Round = 2,
-        RoundSmall = 3,
-    }
-
-    [DllImport("dwmapi.dll", PreserveSig = true)]
-    public static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int pvAttribute, int cbAttribute);
 }
