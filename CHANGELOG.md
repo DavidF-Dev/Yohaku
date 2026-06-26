@@ -6,6 +6,18 @@ All notable changes to Yohaku are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+
+- Shift-click **Rebuild margins** in the tray menu to force a full rebuild; a normal
+  click now re-applies the margins instantly.
+
+### Fixed
+
+- Display changes (a resolution or refresh-rate change, a monitor waking, and similar)
+  no longer make windows shuffle for a second or two when the monitor set has not
+  actually changed; the margins update in place instead. Adding or removing a monitor
+  still does a full rebuild.
+
 ## [1.0.0] - 2026-06-21
 
 ### Added

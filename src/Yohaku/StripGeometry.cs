@@ -73,4 +73,28 @@ internal static class StripGeometry
         }
         return rc;
     }
+
+    /// <summary>Outcome of comparing two monitor enumerations.</summary>
+    public enum DisplayChange { Unchanged, GeometryChanged, TopologyChanged }
+
+    /// <summary>A monitor's full bounds and effective DPI, for detecting display changes.</summary>
+    public readonly record struct MonitorSnapshot(RECT Bounds, uint Dpi);
+
+    /// <summary>
+    /// Classify how a monitor set changed: nothing, geometry only (same count, different
+    /// bounds/DPI), or topology (a monitor was added or removed).
+    /// </summary>
+    public static DisplayChange Compare(IReadOnlyList<MonitorSnapshot> before, IReadOnlyList<MonitorSnapshot> after)
+    {
+        if (before.Count != after.Count) return DisplayChange.TopologyChanged;
+        bool changed = false;
+        for (int i = 0; i < before.Count; i++)
+        {
+            RECT a = before[i].Bounds, b = after[i].Bounds;
+            if (a.Left != b.Left || a.Top != b.Top || a.Right != b.Right || a.Bottom != b.Bottom
+                || before[i].Dpi != after[i].Dpi)
+                changed = true;
+        }
+        return changed ? DisplayChange.GeometryChanged : DisplayChange.Unchanged;
+    }
 }

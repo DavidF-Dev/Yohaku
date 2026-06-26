@@ -14,13 +14,15 @@ public sealed class AppBarManager : IDisposable
     private Config _cfg;
     private readonly List<AppBarStrip> _strips = new();
 
-    // Debounced rebuild (monitor/display changes) and reposition (appbar moves).
+    // Debounced rebuild (taskbar edge move) and reposition (appbar moves).
     private readonly System.Windows.Forms.Timer _rebuildTimer;
     private readonly System.Windows.Forms.Timer _repositionTimer;
     // One-shot defer between teardown and re-create: the appbar subsystem must process the ABM_REMOVE messages before we register replacements, or the new reservations stay inert.
     private readonly System.Windows.Forms.Timer _deferredBuildTimer;
     // Debounced in-place re-pin (taskbar auto-hide toggle / config edit); avoids the teardown flash of a full rebuild.
     private readonly System.Windows.Forms.Timer _reapplyTimer;
+    // Debounced reconcile of a display change: skip if monitors are unchanged, re-pin in place if only geometry changed, rebuild only on add/remove.
+    private readonly System.Windows.Forms.Timer _reconcileTimer;
     private bool _repositioning;
     private bool _disposed;
 
@@ -48,6 +50,8 @@ public sealed class AppBarManager : IDisposable
         // Short settle so a burst of taskbar notifications collapses into one re-pin.
         _reapplyTimer = new System.Windows.Forms.Timer { Interval = 200 };
         _reapplyTimer.Tick += (_, _) => { _reapplyTimer.Stop(); if (!_disposed && !TryReapplyInPlace()) Rebuild(); };
+        _reconcileTimer = new System.Windows.Forms.Timer { Interval = 500 };
+        _reconcileTimer.Tick += (_, _) => { _reconcileTimer.Stop(); ReconcileDisplays(); };
     }
 
     public void ApplyConfig(Config cfg)
@@ -133,12 +137,77 @@ public sealed class AppBarManager : IDisposable
         _deferredBuildTimer.Start();
     }
 
-    /// <summary>Debounced rebuild; call on monitor add/remove or display changes.</summary>
+    /// <summary>Debounced full rebuild; call when the taskbar edge moves.</summary>
     public void ScheduleRebuild()
     {
         if (_disposed) return;
         _rebuildTimer.Stop();
         _rebuildTimer.Start();
+    }
+
+    /// <summary>Debounced reconcile; call on a display change to decide skip / in-place / rebuild.</summary>
+    public void ScheduleReconcile()
+    {
+        if (_disposed) return;
+        _reconcileTimer.Stop();
+        _reconcileTimer.Start();
+    }
+
+    /// <summary>Re-apply the margins in place now (manual "Rebuild margins"); falls back to a full rebuild if needed.</summary>
+    public void ReapplyMargins()
+    {
+        if (_disposed) return;
+        ReapplyWithGeometry(EnumerateMonitors());
+    }
+
+    // Compare the live monitor set to the cached one: skip if unchanged, re-pin in place if only geometry changed, rebuild on add/remove.
+    private void ReconcileDisplays()
+    {
+        if (_disposed) return;
+
+        var fresh = EnumerateMonitors();
+        if (fresh.Count == 0)
+        {
+            Log.Info("Display change; no monitors enumerated, skipping.");
+            return;
+        }
+
+        switch (StripGeometry.Compare(Snapshot(_monitors), Snapshot(fresh)))
+        {
+            case StripGeometry.DisplayChange.Unchanged:
+                Log.Info("Display change; monitors unchanged, skipping rebuild.");
+                break;
+            case StripGeometry.DisplayChange.GeometryChanged:
+                Log.Info("Display geometry changed; re-applying in place.");
+                ReapplyWithGeometry(fresh);
+                break;
+            default:
+                Log.Info("Monitor set changed; rebuilding.");
+                Rebuild();
+                break;
+        }
+    }
+
+    // Refresh cached geometry and re-pin in place when the monitor count is unchanged; otherwise a full rebuild.
+    private void ReapplyWithGeometry(List<MonitorData> fresh)
+    {
+        if (_strips.Count == fresh.Count * EdgeOrder.Length)
+        {
+            _monitors = fresh;
+            for (int i = 0; i < fresh.Count; i++)
+                for (int e = 0; e < EdgeOrder.Length; e++)
+                    _strips[i * EdgeOrder.Length + e].UpdateMonitorBounds(fresh[i].Monitor);
+
+            if (TryReapplyInPlace()) return;
+        }
+        Rebuild();
+    }
+
+    private static List<StripGeometry.MonitorSnapshot> Snapshot(List<MonitorData> monitors)
+    {
+        var snap = new List<StripGeometry.MonitorSnapshot>(monitors.Count);
+        foreach (var m in monitors) snap.Add(new StripGeometry.MonitorSnapshot(m.Monitor, m.Dpi));
+        return snap;
     }
 
     // ---- Reposition (appbar notifications) ----------------------------
@@ -242,6 +311,7 @@ public sealed class AppBarManager : IDisposable
         public RECT Monitor;
         public RECT Work;
         public double Scale = 1.0;
+        public uint Dpi = 96;
     }
 
     private static List<MonitorData> EnumerateMonitors()
@@ -254,10 +324,10 @@ public sealed class AppBarManager : IDisposable
             var mi = new MONITORINFO { cbSize = Marshal.SizeOf<MONITORINFO>() };
             if (GetMonitorInfo(hMon, ref mi))
             {
-                double scale = 1.0;
+                uint dpi = 96;
                 if (GetDpiForMonitor(hMon, MDT_EFFECTIVE_DPI, out var dpiX, out _) == 0 && dpiX > 0)
-                    scale = dpiX / 96.0;
-                list.Add(new MonitorData { Handle = hMon, Monitor = mi.rcMonitor, Work = mi.rcWork, Scale = scale });
+                    dpi = dpiX;
+                list.Add(new MonitorData { Handle = hMon, Monitor = mi.rcMonitor, Work = mi.rcWork, Scale = dpi / 96.0, Dpi = dpi });
             }
             return true;
         };
@@ -274,6 +344,7 @@ public sealed class AppBarManager : IDisposable
         _repositionTimer.Dispose();
         _deferredBuildTimer.Dispose();
         _reapplyTimer.Dispose();
+        _reconcileTimer.Dispose();
         RemoveAll();
     }
 }

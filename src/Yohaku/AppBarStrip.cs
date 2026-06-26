@@ -21,7 +21,7 @@ internal sealed class AppBarStrip : NativeWindow
     private const int WS_EX_NOACTIVATE = 0x08000000;
 
     private readonly uint _edge;          // ABE_*
-    private readonly RECT _monitor;       // full monitor bounds (physical px)
+    private RECT _monitor;                 // full monitor bounds (physical px)
     private int _thickness;               // reserved thickness for this edge (physical px)
     private readonly Action _onPosChanged;
 
@@ -29,6 +29,9 @@ internal sealed class AppBarStrip : NativeWindow
 
     public RECT ReservedRect { get; private set; }
     public int Thickness => _thickness;
+
+    /// <summary>Update the cached monitor bounds (e.g. after a resolution change); the next reposition uses the new geometry.</summary>
+    public void UpdateMonitorBounds(RECT bounds) => _monitor = bounds;
 
     public AppBarStrip(uint edge, RECT monitorBounds, int thickness, Action onPosChanged)
     {

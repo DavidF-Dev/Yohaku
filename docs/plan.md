@@ -3,6 +3,15 @@
 Forward-looking work. For how the app is built and the decisions already locked
 in, see `CLAUDE.md`.
 
+## Done: smoother rebuilds
+
+Display-change events (`DisplaySettingsChanged`) now reconcile the live monitor set
+against the cached one: skip if unchanged, re-pin in place if only geometry changed,
+full teardown only on monitor add/remove. Manual "Rebuild margins" re-applies in place
+(Shift+click forces a teardown). Implemented and unit-tested (the `Compare` helper);
+live verification of the display-event paths is pending. Design in
+`smooth-rebuild-plan.md`.
+
 ## Done: taskbar-side inset
 
 A taskbar-aware inset override (`Config.TaskbarInset`), a separate inset on

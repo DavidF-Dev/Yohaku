@@ -181,4 +181,48 @@ public class StripGeometryTests
     [Fact]
     public void PickInset_uses_edge_inset_when_no_taskbar() =>
         Assert.Equal(12, StripGeometry.PickInset(ABE_BOTTOM, uint.MaxValue, false, 12, 8));
+
+    // ---- Compare (display reconciliation) ------------------------------
+
+    private static StripGeometry.MonitorSnapshot Snap(int l, int t, int r, int b, uint dpi) =>
+        new(new RECT { Left = l, Top = t, Right = r, Bottom = b }, dpi);
+
+    [Fact]
+    public void Compare_unchanged_when_identical()
+    {
+        var set = new[] { Snap(0, 0, 1920, 1080, 96), Snap(1920, 0, 3840, 1080, 144) };
+        Assert.Equal(StripGeometry.DisplayChange.Unchanged, StripGeometry.Compare(set, set));
+    }
+
+    [Fact]
+    public void Compare_geometry_changed_on_resolution()
+    {
+        var before = new[] { Snap(0, 0, 1920, 1080, 96) };
+        var after = new[] { Snap(0, 0, 2560, 1440, 96) };
+        Assert.Equal(StripGeometry.DisplayChange.GeometryChanged, StripGeometry.Compare(before, after));
+    }
+
+    [Fact]
+    public void Compare_geometry_changed_on_dpi()
+    {
+        var before = new[] { Snap(0, 0, 1920, 1080, 96) };
+        var after = new[] { Snap(0, 0, 1920, 1080, 144) };
+        Assert.Equal(StripGeometry.DisplayChange.GeometryChanged, StripGeometry.Compare(before, after));
+    }
+
+    [Fact]
+    public void Compare_topology_changed_on_monitor_added()
+    {
+        var before = new[] { Snap(0, 0, 1920, 1080, 96) };
+        var after = new[] { Snap(0, 0, 1920, 1080, 96), Snap(1920, 0, 3840, 1080, 96) };
+        Assert.Equal(StripGeometry.DisplayChange.TopologyChanged, StripGeometry.Compare(before, after));
+    }
+
+    [Fact]
+    public void Compare_topology_changed_on_monitor_removed()
+    {
+        var before = new[] { Snap(0, 0, 1920, 1080, 96), Snap(1920, 0, 3840, 1080, 96) };
+        var after = new[] { Snap(0, 0, 1920, 1080, 96) };
+        Assert.Equal(StripGeometry.DisplayChange.TopologyChanged, StripGeometry.Compare(before, after));
+    }
 }

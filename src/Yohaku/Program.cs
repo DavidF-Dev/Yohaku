@@ -55,7 +55,7 @@ internal static class Program
         SetupActivationListener();
         Startup.SyncPathIfEnabled();
 
-        // Rebuild appbars when monitors are added/removed or resolution/DPI changes.
+        // Reconcile appbars when monitors are added/removed or resolution/DPI changes.
         SystemEvents.DisplaySettingsChanged += OnDisplaySettingsChanged;
 
         Application.ApplicationExit += OnExit;
@@ -80,8 +80,8 @@ internal static class Program
 
     private static void OnDisplaySettingsChanged(object? sender, EventArgs e)
     {
-        Log.Info("Display settings changed; scheduling appbar rebuild.");
-        _appbars?.ScheduleRebuild();
+        Log.Info("Display settings changed; reconciling monitors.");
+        _appbars?.ScheduleReconcile();
     }
 
     // ---- System tray ---------------------------------------------------
@@ -93,7 +93,12 @@ internal static class Program
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Edit config…", null, (_, _) => OpenConfig());
         menu.Items.Add("Reload config", null, (_, _) => ReloadConfig());
-        menu.Items.Add("Rebuild margins", null, (_, _) => _appbars?.Rebuild());
+        // Plain click re-applies in place (smooth); Shift+click forces a full teardown rebuild.
+        menu.Items.Add("Rebuild margins", null, (_, _) =>
+        {
+            if ((Control.ModifierKeys & Keys.Shift) == Keys.Shift) _appbars?.Rebuild();
+            else _appbars?.ReapplyMargins();
+        });
         menu.Items.Add("Open log folder", null, (_, _) => OpenLogFolder());
 
         var startupItem = new ToolStripMenuItem("Start with Windows")
