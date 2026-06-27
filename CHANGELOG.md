@@ -6,6 +6,8 @@ All notable changes to Yohaku are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-06-27
+
 ### Added
 
 - Shift-click **Rebuild margins** in the tray menu to force a full rebuild; a normal
