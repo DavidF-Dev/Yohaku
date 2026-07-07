@@ -55,7 +55,7 @@ dotnet publish $csproj -c Release -r win-x64 --self-contained true `
     -o $publishDir --nologo
 if ($LASTEXITCODE -ne 0) { Fail 'dotnet publish failed' }
 
-$built = Join-Path $publishDir 'Yohaku.exe'
+$built = Join-Path $publishDir 'yohaku.exe'
 if (-not (Test-Path $built)) { Fail "expected $built not found after publish" }
 
 # Stage the archive contents: a stable-named exe plus the licence and readme.

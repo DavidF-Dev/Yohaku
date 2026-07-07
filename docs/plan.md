@@ -9,8 +9,7 @@ Releases now ship as `yohaku-<version>-win-x64.zip` (containing a stable-named
 `yohaku.exe`, `LICENSE.txt`, and a short `README.txt`) instead of a bare exe, so the
 process name is stable (`yohaku`) and updates keep the run-at-login path valid.
 `publish.ps1`/`release.ps1` build and upload the archive; verified by extracting and
-running (process name `yohaku`). Takes effect from the next release. Design in
-`release-archive-plan.md`.
+running (process name `yohaku`). Takes effect from the next release.
 
 ## Done: smoother rebuilds
 
@@ -42,12 +41,12 @@ plan kept in `rounded-corners-plan.md` if this is ever revisited.
 
 ## Done: publishing setup
 
-Metadata, `LICENSE` (MIT), About tray item, version `1.0.0`, and `CHANGELOG.md` are in
-place. `scripts/publish.ps1` produces a self-contained, single-file
-`dist/Yohaku-<version>.exe` (unsigned, with a published SHA-256); `scripts/release.ps1`
-cuts the GitHub release (guard rails, CHANGELOG notes, confirm prompt). The README has
-a "Download & run" section. All release-blocking live checks pass; remaining step is to
-run `release.ps1` to cut 1.0.0.
+Metadata, `LICENSE` (MIT), About tray item, `CHANGELOG.md`, and a "Download & run"
+README section are in place. `scripts/publish.ps1` produces the self-contained,
+unsigned build (with a published SHA-256) and `scripts/release.ps1` cuts the GitHub
+release (guard rails, CHANGELOG notes, confirm prompt). Releases are shipping (1.0.0
+and 1.1.0 published). Archive packaging is covered in "release as a versioned zip"
+above.
 
 ## Done: "already running" feedback
 

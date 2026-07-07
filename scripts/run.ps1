@@ -27,7 +27,7 @@ $ErrorActionPreference = 'Stop'
 
 # Repo root is the parent of this script's folder, regardless of cwd.
 $root = Split-Path -Parent $PSScriptRoot
-$exe  = Join-Path $root "src\Yohaku\bin\$Configuration\net8.0-windows\Yohaku.exe"
+$exe  = Join-Path $root "src\Yohaku\bin\$Configuration\net8.0-windows\yohaku.exe"
 
 if (-not $NoBuild) {
     Write-Host "Building Yohaku ($Configuration)..." -ForegroundColor Cyan

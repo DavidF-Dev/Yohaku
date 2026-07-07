@@ -33,7 +33,7 @@ work area; windows then maximise to the inset rect natively.
 
 ```powershell
 dotnet build Yohaku.slnx -c Release      # must stay 0 warnings
-dotnet test  Yohaku.slnx                 # 19 xUnit tests (pure geometry + config)
+dotnet test  Yohaku.slnx                 # xUnit tests (pure geometry + config)
 .\scripts\run.ps1                        # build Release + launch (-NoBuild to skip build)
 ```
 
@@ -52,7 +52,7 @@ Integration checks need a live desktop (not headless-CI) and Yohaku running:
   - `AppBarStrip.cs`: one reserved strip = a hidden appbar `NativeWindow`
   - `StripGeometry.cs`: **pure** geometry (DPI scale, per-edge rects); unit-tested
   - `Config.cs`: per-edge insets, JSON load/save
-  - `NativeMethods.cs`: P/Invoke (appbar, monitor enum, DPI, DWM corner [reserved])
+  - `NativeMethods.cs`: P/Invoke (appbar, monitor enum, DPI)
 - `tests/Yohaku.Tests/`: xUnit; internals exposed via `InternalsVisibleTo`
 - `scripts/`: `run.ps1` / `run.bat` launchers
 - `tools/`: icon SVG + `generate-icon.ps1` (regenerates `src/Yohaku/Yohaku.ico`)

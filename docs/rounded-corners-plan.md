@@ -102,5 +102,3 @@ result clears the quality bar.
 - **Spike-first or commit to the full build now?**
 - **Radius** (fixed logical px, DPI-scaled?) and whether it's **configurable** + a
   **tray toggle** (default on or off?).
-- **`NativeMethods`** still carries the old DWM corner-preference P/Invoke; with that
-  API confirmed useless here, remove it or keep as a documented dead-end?

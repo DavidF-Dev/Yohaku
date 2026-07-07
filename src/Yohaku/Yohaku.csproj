@@ -8,7 +8,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Yohaku.ico</ApplicationIcon>
-    <AssemblyName>Yohaku</AssemblyName>
+    <AssemblyName>yohaku</AssemblyName>
     <RootNamespace>Yohaku</RootNamespace>
 
     <!-- Published metadata (surfaces in the EXE's Details tab and any package manifest). -->

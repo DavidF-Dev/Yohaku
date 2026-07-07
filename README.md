@@ -72,7 +72,7 @@ admin rights required.
 
 ```powershell
 dotnet build Yohaku.slnx -c Release
-.\src\Yohaku\bin\Release\net8.0-windows\Yohaku.exe
+.\src\Yohaku\bin\Release\net8.0-windows\yohaku.exe
 ```
 
 ## Tests
