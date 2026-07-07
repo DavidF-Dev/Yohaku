@@ -75,21 +75,22 @@ try {
     }
     if ([string]::IsNullOrWhiteSpace($notes)) { Fail "no CHANGELOG.md section found for [$version]" }
 
-    # --- Build the distributable exe (publish.ps1 runs the tests and publishes) ---
+    # --- Build the distributable archive (publish.ps1 runs the tests and packages) ---
     # Run as a child process so its internal `exit` can't tear down this script.
     & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'publish.ps1')
     if ($LASTEXITCODE -ne 0) { Fail 'publish.ps1 failed' }
-    $asset = "dist/Yohaku-$version.exe"
+    $assetName = "yohaku-$version-win-x64.zip"
+    $asset = "dist/$assetName"
     if (-not (Test-Path $asset)) { Fail "expected $asset not found" }
     $sha    = (Get-FileHash $asset -Algorithm SHA256).Hash
     $sizeMb = [math]::Round((Get-Item $asset).Length / 1MB, 1)
-    $releaseBody = "$notes`n`n---`nSHA-256 (Yohaku-$version.exe): ``$sha``"
+    $releaseBody = "$notes`n`n---`nSHA-256 ($assetName): ``$sha``"
 
     # --- Confirm before the outward, irreversible step (tag + publish) ---
     Write-Host ''
     Write-Host 'About to publish a GitHub Release:' -ForegroundColor Yellow
     Write-Host "  Tag / title : $tag  (gh creates the tag at HEAD)"
-    Write-Host "  Asset       : Yohaku-$version.exe  ($sizeMb MB)"
+    Write-Host "  Asset       : $assetName  ($sizeMb MB)"
     Write-Host "  SHA-256     : $sha"
     Write-Host '  Notes       :'
     $releaseBody -split "`n" | ForEach-Object { Write-Host "      $_" }
@@ -109,7 +110,7 @@ try {
     $published = ($LASTEXITCODE -eq 0)
     Remove-Item $notesFile -ErrorAction SilentlyContinue
     if (-not $published) { Fail 'gh release create failed' }
-    Write-Host "Published $tag (Yohaku-$version.exe)" -ForegroundColor Green
+    Write-Host "Published $tag ($assetName)" -ForegroundColor Green
 }
 finally {
     Pop-Location

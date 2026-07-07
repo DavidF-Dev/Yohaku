@@ -43,14 +43,17 @@ work area.
 
 ## Download & run
 
-Grab the latest **`Yohaku-<version>.exe`** from the
-[Releases](https://github.com/DavidF-Dev/Yohaku/releases) page and run it. It's one
-self-contained executable: no installer, and no .NET runtime to install.
+Grab the latest **`yohaku-<version>-win-x64.zip`** from the
+[Releases](https://github.com/DavidF-Dev/Yohaku/releases) page, **extract it to a
+folder you will keep** (not a temporary location), and run `yohaku.exe`. It's a
+self-contained build: no installer, and no .NET runtime to install.
 
 - **Requires** Windows 11 (64-bit).
+- **Extract before running.** Don't launch `yohaku.exe` from inside the zip: the
+  "Start with Windows" option records the exe's path, so it needs a stable location.
 - **Unsigned:** Windows SmartScreen will warn with "Windows protected your PC". Click
-  **More info → Run anyway**. Each release publishes the exe's **SHA-256** so you can
-  verify the download (`Get-FileHash Yohaku-<version>.exe`).
+  **More info → Run anyway**. Each release publishes the archive's **SHA-256** so you
+  can verify the download (`Get-FileHash yohaku-<version>-win-x64.zip`).
 
 Yohaku runs in the system tray; right-click the icon for options. See
 [CHANGELOG.md](CHANGELOG.md) for what's in each release.

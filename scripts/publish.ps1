@@ -1,14 +1,15 @@
 <#
 .SYNOPSIS
-    Build a distributable, self-contained Yohaku.exe.
+    Build a distributable Yohaku release archive.
 
 .DESCRIPTION
-    Publishes a self-contained, single-file, compressed win-x64 build and stages it as
-    dist/Yohaku-<version>.exe (version read from src/Yohaku/Yohaku.csproj, the single
-    source of truth). Prints the SHA-256 so a release can advertise it. Runs the unit
+    Publishes a self-contained, single-file, compressed win-x64 build and packages it as
+    dist/yohaku-<version>-win-x64.zip (version read from src/Yohaku/Yohaku.csproj, the
+    single source of truth). The archive holds yohaku.exe (stable name), LICENSE.txt, and
+    README.txt. Prints the zip's SHA-256 so a release can advertise it. Runs the unit
     tests first unless -SkipTests.
 
-    The result needs no .NET runtime installed; it is a bare exe meant to be run as-is.
+    The exe needs no .NET runtime installed; extract the archive and run yohaku.exe.
 
 .PARAMETER SkipTests
     Skip the unit-test gate (off by default).
@@ -57,9 +58,18 @@ if ($LASTEXITCODE -ne 0) { Fail 'dotnet publish failed' }
 $built = Join-Path $publishDir 'Yohaku.exe'
 if (-not (Test-Path $built)) { Fail "expected $built not found after publish" }
 
+# Stage the archive contents: a stable-named exe plus the licence and readme.
+$stageDir = Join-Path $repoRoot 'src\Yohaku\bin\publish-stage'
+if (Test-Path $stageDir) { Remove-Item $stageDir -Recurse -Force }
+New-Item -ItemType Directory -Force -Path $stageDir | Out-Null
+Copy-Item $built (Join-Path $stageDir 'yohaku.exe') -Force
+Copy-Item (Join-Path $repoRoot 'LICENSE') (Join-Path $stageDir 'LICENSE.txt') -Force
+Copy-Item (Join-Path $repoRoot 'packaging\README.txt') (Join-Path $stageDir 'README.txt') -Force
+
 New-Item -ItemType Directory -Force -Path $distDir | Out-Null
-$asset = Join-Path $distDir "Yohaku-$version.exe"
-Copy-Item $built $asset -Force
+$asset = Join-Path $distDir "yohaku-$version-win-x64.zip"
+# The trailing \* keeps the files at the archive root rather than nested under a folder.
+Compress-Archive -Path (Join-Path $stageDir '*') -DestinationPath $asset -Force
 
 $sha    = (Get-FileHash $asset -Algorithm SHA256).Hash
 $sizeMb = [math]::Round((Get-Item $asset).Length / 1MB, 1)

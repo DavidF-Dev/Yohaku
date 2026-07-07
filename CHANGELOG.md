@@ -6,6 +6,11 @@ All notable changes to Yohaku are documented here. The format is based on
 
 ## [Unreleased]
 
+### Changed
+
+- Releases now ship as a `yohaku-<version>-win-x64.zip` archive (containing
+  `yohaku.exe`, `LICENSE.txt`, and `README.txt`) instead of a bare `.exe`.
+
 ## [1.1.0] - 2026-06-27
 
 ### Added

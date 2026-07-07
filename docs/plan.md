@@ -3,6 +3,15 @@
 Forward-looking work. For how the app is built and the decisions already locked
 in, see `CLAUDE.md`.
 
+## Done: release as a versioned zip
+
+Releases now ship as `yohaku-<version>-win-x64.zip` (containing a stable-named
+`yohaku.exe`, `LICENSE.txt`, and a short `README.txt`) instead of a bare exe, so the
+process name is stable (`yohaku`) and updates keep the run-at-login path valid.
+`publish.ps1`/`release.ps1` build and upload the archive; verified by extracting and
+running (process name `yohaku`). Takes effect from the next release. Design in
+`release-archive-plan.md`.
+
 ## Done: smoother rebuilds
 
 Display-change events (`DisplaySettingsChanged`) now reconcile the live monitor set
