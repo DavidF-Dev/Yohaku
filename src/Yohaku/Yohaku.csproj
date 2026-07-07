@@ -18,7 +18,7 @@
     <Authors>David F Dev</Authors>
     <Company>David F Dev</Company>
     <Copyright>Copyright © 2026 David F Dev</Copyright>
-    <Version>1.1.0</Version>
+    <Version>1.1.1</Version>
     <!-- Keep InformationalVersion clean (no +<git-commit> suffix from SourceRevisionId). -->
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <PackageProjectUrl>https://github.com/DavidF-Dev/Yohaku</PackageProjectUrl>

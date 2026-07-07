@@ -6,6 +6,8 @@ All notable changes to Yohaku are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-07-07
+
 ### Changed
 
 - Releases now ship as a `yohaku-<version>-win-x64.zip` archive (containing
